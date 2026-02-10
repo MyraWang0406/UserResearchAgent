@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  research-api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - API_KEY=admin123
+      - CORS_ORIGINS=https://app.yourdomain.com,http://localhost:5173
+    volumes:
+      - ./research_os.db:/app/research_os.db
+    restart: always

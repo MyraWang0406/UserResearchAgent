@@ -2,37 +2,169 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Research OS - AI 产品操作系统</title>
+    <title>Research OS v1.1 - AI 产品操作系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 p-8">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold mb-8 text-blue-600">Research OS v1.0</h1>
-        
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-xl font-semibold mb-4">快速诊断</h2>
-            <textarea id="problem" class="w-full p-2 border rounded mb-4" rows="4" placeholder="描述您的核心问题..."></textarea>
-            <button onclick="runDiagnose()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">开始 AI 诊断</button>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-blue-600 text-white p-4 shadow-lg">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Research OS v1.1</h1>
+            <div class="space-x-4">
+                <button onclick="showTab('diagnose')" class="hover:underline">AI 诊断</button>
+                <button onclick="showTab('traces')" class="hover:underline">Trace 监控</button>
+                <button onclick="showTab('approvals')" class="hover:underline">审批管理</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-8">
+        <!-- 配置面板 -->
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 flex justify-between items-center">
+            <div>
+                <p class="text-sm text-yellow-700">后端地址: <span id="api-url-display">加载中...</span></p>
+            </div>
+            <div class="flex space-x-2">
+                <input type="password" id="api-key" placeholder="输入 API Key" class="p-1 text-sm border rounded" value="admin123">
+                <button onclick="saveConfig()" class="bg-yellow-600 text-white px-3 py-1 text-sm rounded">保存配置</button>
+            </div>
         </div>
 
-        <div id="result" class="bg-white p-6 rounded-lg shadow-md hidden">
-            <h2 class="text-xl font-semibold mb-4">诊断结果 (Traceable)</h2>
-            <pre id="output" class="bg-gray-100 p-4 rounded text-sm overflow-auto"></pre>
+        <!-- AI 诊断 Tab -->
+        <div id="tab-diagnose" class="tab-content">
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4">快速诊断 (Human-in-the-loop)</h2>
+                <textarea id="problem" class="w-full p-2 border rounded mb-4" rows="4" placeholder="描述您的核心问题..."></textarea>
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="require-approval" class="mr-2">
+                    <label for="require-approval" class="text-sm text-gray-600">此动作需要人工审批 (HITL)</label>
+                </div>
+                <button onclick="runDiagnose()" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">开始 AI 诊断</button>
+            </div>
+            <div id="result" class="bg-white p-6 rounded-lg shadow-md hidden">
+                <h2 class="text-xl font-semibold mb-4">实时输出</h2>
+                <pre id="output" class="bg-gray-100 p-4 rounded text-sm overflow-auto max-h-96"></pre>
+            </div>
         </div>
-    </div>
+
+        <!-- Trace 监控 Tab -->
+        <div id="tab-traces" class="tab-content hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">决策链路追溯 (Traceable)</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="p-2 border">时间</th>
+                                <th class="p-2 border">步骤</th>
+                                <th class="p-2 border">状态</th>
+                                <th class="p-2 border">详情</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trace-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 审批管理 Tab -->
+        <div id="tab-approvals" class="tab-content hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">待审批任务 (HITL)</h2>
+                <div id="approval-list" class="space-y-4"></div>
+            </div>
+        </div>
+    </main>
 
     <script>
+        // 配置管理
+        let API_BASE = window.location.origin.includes('localhost') ? 'http://localhost:8000' : '';
+        
+        function saveConfig() {
+            const key = document.getElementById('api-key').value;
+            localStorage.setItem('research_os_key', key);
+            alert('配置已保存');
+        }
+
+        function getHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'X-API-Key': localStorage.getItem('research_os_key') || 'admin123'
+            };
+        }
+
+        async function init() {
+            // 尝试从 config.json 加载后端地址（如果存在）
+            try {
+                const res = await fetch('/config.json');
+                const config = await res.json();
+                API_BASE = config.API_BASE;
+            } catch(e) {}
+            document.getElementById('api-url-display').innerText = API_BASE || '当前域名';
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            if(tabId === 'traces') loadTraces();
+            if(tabId === 'approvals') loadApprovals();
+        }
+
         async function runDiagnose() {
             const problem = document.getElementById('problem').value;
-            const res = await fetch('/api/v1/diagnose', {
+            const requireApproval = document.getElementById('require-approval').checked;
+            const res = await fetch(`${API_BASE}/api/v1/diagnose`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({core_problem: problem, growth_driver: ['PLG', 'SLG']})
+                headers: getHeaders(),
+                body: JSON.stringify({core_problem: problem, growth_driver: ['PLG'], require_approval: requireApproval})
             });
             const data = await res.json();
             document.getElementById('result').classList.remove('hidden');
             document.getElementById('output').innerText = JSON.stringify(data, null, 2);
         }
+
+        async function loadTraces() {
+            const res = await fetch(`${API_BASE}/api/v1/traces`, { headers: getHeaders() });
+            const data = await res.json();
+            const list = document.getElementById('trace-list');
+            list.innerHTML = data.map(t => `
+                <tr>
+                    <td class="p-2 border text-xs">${new Date(t.timestamp).toLocaleString()}</td>
+                    <td class="p-2 border font-mono text-sm">${t.step_name}</td>
+                    <td class="p-2 border"><span class="px-2 py-1 rounded text-xs ${t.status === 'SUCCESS' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${t.status}</span></td>
+                    <td class="p-2 border"><button onclick='alert(JSON.stringify(${t.output_data}, null, 2))' class="text-blue-600 hover:underline text-sm">查看</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadApprovals() {
+            const res = await fetch(`${API_BASE}/api/v1/approvals/pending`, { headers: getHeaders() });
+            const data = await res.json();
+            const list = document.getElementById('approval-list');
+            if(data.length === 0) { list.innerHTML = '<p class="text-gray-500">暂无待审批任务</p>'; return; }
+            list.innerHTML = data.map(a => `
+                <div class="border p-4 rounded bg-gray-50">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-bold text-blue-600">${a.action_type}</span>
+                        <span class="text-xs text-gray-400">${a.id}</span>
+                    </div>
+                    <pre class="text-xs bg-white p-2 mb-4 overflow-auto max-h-24">${a.payload}</pre>
+                    <div class="flex space-x-2">
+                        <button onclick="approve('${a.id}', 'APPROVED')" class="bg-green-500 text-white px-3 py-1 rounded text-sm">通过</button>
+                        <button onclick="approve('${a.id}', 'REJECTED')" class="bg-red-500 text-white px-3 py-1 rounded text-sm">拒绝</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function approve(id, decision) {
+            await fetch(`${API_BASE}/api/v1/approve?approval_id=${id}&decision=${decision}`, {
+                method: 'POST',
+                headers: getHeaders()
+            });
+            loadApprovals();
+        }
+
+        init();
     </script>
 </body>
 </html>
