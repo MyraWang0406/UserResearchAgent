@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Research OS - AI 产品操作系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-blue-600">Research OS v1.0</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4">快速诊断</h2>
+            <textarea id="problem" class="w-full p-2 border rounded mb-4" rows="4" placeholder="描述您的核心问题..."></textarea>
+            <button onclick="runDiagnose()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">开始 AI 诊断</button>
+        </div>
+
+        <div id="result" class="bg-white p-6 rounded-lg shadow-md hidden">
+            <h2 class="text-xl font-semibold mb-4">诊断结果 (Traceable)</h2>
+            <pre id="output" class="bg-gray-100 p-4 rounded text-sm overflow-auto"></pre>
+        </div>
+    </div>
+
+    <script>
+        async function runDiagnose() {
+            const problem = document.getElementById('problem').value;
+            const res = await fetch('/api/v1/diagnose', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({core_problem: problem, growth_driver: ['PLG', 'SLG']})
+            });
+            const data = await res.json();
+            document.getElementById('result').classList.remove('hidden');
+            document.getElementById('output').innerText = JSON.stringify(data, null, 2);
+        }
+    </script>
+</body>
+</html>
