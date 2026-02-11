@@ -7,6 +7,7 @@ import os
 from ..core.engine import engine
 from ..core.database import init_db, save_trace, get_all_traces, create_approval, update_approval, get_pending_approvals
 from ..services.research_service import diagnose_with_growth_logic, generate_survey_v2
+from ..services.bc_growth_service import run_bc_growth_research
 
 app = FastAPI(title="Research OS API", version="1.1.0")
 
@@ -36,27 +37,20 @@ async def verify_token(x_api_key: str = Header(None)):
 def health():
     return {"status": "healthy", "version": "1.1.0"}
 
+@app.get("/ping")
+async def ping(token: str = Depends(verify_token)):
+    return {"message": "pong", "status": "authenticated"}
+
 # --- 核心业务接口 ---
-@app.post("/api/v1/diagnose")
-async def diagnose(payload: Dict[str, Any], token: str = Depends(verify_token)):
-    result = engine.execute_step("diagnose", diagnose_with_growth_logic, payload)
+@app.post("/api/v1/bc_growth_research")
+async def bc_growth_research(payload: Dict[str, Any], token: str = Depends(verify_token)):
+    result = engine.execute_step("bc_growth_research", run_bc_growth_research, payload)
     save_trace(result)
     return result
 
-@app.post("/api/v1/survey/generate")
-async def create_survey(payload: Dict[str, Any], token: str = Depends(verify_token)):
-    # 模拟需要审批的逻辑
-    if payload.get("require_approval"):
-        approval_id = f"appr_{str(uuid.uuid4())[:8]}"
-        create_approval({
-            "id": approval_id,
-            "action_type": "GENERATE_SURVEY",
-            "payload": payload,
-            "requester_id": "user_1"
-        })
-        return {"status": "PENDING_APPROVAL", "approval_id": approval_id}
-    
-    result = engine.execute_step("generate_survey", generate_survey_v2, payload)
+@app.post("/api/v1/diagnose")
+async def diagnose(payload: Dict[str, Any], token: str = Depends(verify_token)):
+    result = engine.execute_step("diagnose", diagnose_with_growth_logic, payload)
     save_trace(result)
     return result
 
@@ -71,7 +65,6 @@ async def list_pending_approvals(token: str = Depends(verify_token)):
 
 @app.post("/api/v1/approve")
 async def approve_action(approval_id: str, decision: str, comment: str = "", token: str = Depends(verify_token)):
-    # decision: APPROVED / REJECTED
     update_approval(approval_id, decision, "admin", comment)
     return {"status": "success", "approval_id": approval_id, "decision": decision}
 
@@ -80,16 +73,16 @@ async def approve_action(approval_id: str, decision: str, comment: str = "", tok
 async def list_mcp_tools():
     return {
         "tools": [
-            {"name": "diagnose", "description": "执行 AI 业务诊断", "input_schema": {"type": "object"}},
-            {"name": "generate_survey", "description": "生成定性/定量问卷", "input_schema": {"type": "object"}}
+            {"name": "bc_growth_research", "description": "执行 BC 双端有限规模增长研究", "input_schema": {"type": "object"}},
+            {"name": "diagnose", "description": "执行 AI 业务诊断", "input_schema": {"type": "object"}}
         ]
     }
 
 @app.post("/mcp/call")
 async def call_mcp_tool(tool_name: str, arguments: Dict[str, Any], token: str = Depends(verify_token)):
-    if tool_name == "diagnose":
+    if tool_name == "bc_growth_research":
+        return await bc_growth_research(arguments, token)
+    elif tool_name == "diagnose":
         return await diagnose(arguments, token)
-    elif tool_name == "generate_survey":
-        return await create_survey(arguments, token)
     else:
         raise HTTPException(status_code=404, detail="Tool not found")

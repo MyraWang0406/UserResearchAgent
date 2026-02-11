@@ -2,56 +2,118 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Research OS v1.1 - AI 产品操作系统</title>
+    <title>Research OS v1.1 - BC 双端有限规模增长系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-blue-600 text-white p-4 shadow-lg">
+    <nav class="bg-blue-700 text-white p-4 shadow-lg">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold">Research OS v1.1</h1>
-            <div class="space-x-4">
-                <button onclick="showTab('diagnose')" class="hover:underline">AI 诊断</button>
-                <button onclick="showTab('traces')" class="hover:underline">Trace 监控</button>
-                <button onclick="showTab('approvals')" class="hover:underline">审批管理</button>
+            <div class="space-x-6">
+                <button onclick="showTab('bc-research')" class="hover:text-blue-200">BC 研究交付</button>
+                <button onclick="showTab('traces')" class="hover:text-blue-200">Trace 监控</button>
+                <button onclick="showTab('approvals')" class="hover:text-blue-200">审批管理</button>
+                <button onclick="showTab('config')" class="hover:text-blue-200">⚙️ 配置</button>
             </div>
         </div>
     </nav>
 
     <main class="max-w-6xl mx-auto p-8">
-        <!-- 配置面板 -->
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 flex justify-between items-center">
-            <div>
-                <p class="text-sm text-yellow-700">后端地址: <span id="api-url-display">加载中...</span></p>
-            </div>
-            <div class="flex space-x-2">
-                <input type="password" id="api-key" placeholder="输入 API Key" class="p-1 text-sm border rounded" value="admin123">
-                <button onclick="saveConfig()" class="bg-yellow-600 text-white px-3 py-1 text-sm rounded">保存配置</button>
+        <!-- 配置 Tab -->
+        <div id="tab-config" class="tab-content hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">系统配置</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">API Base URL</label>
+                        <input type="text" id="api-base" class="w-full p-2 border rounded" placeholder="http://47.101.155.238:8000">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">API Key (X-API-Key)</label>
+                        <input type="password" id="api-key" class="w-full p-2 border rounded" value="admin123">
+                    </div>
+                    <button onclick="saveConfig()" class="bg-blue-600 text-white px-4 py-2 rounded">保存并刷新</button>
+                </div>
             </div>
         </div>
 
-        <!-- AI 诊断 Tab -->
-        <div id="tab-diagnose" class="tab-content">
-            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-                <h2 class="text-xl font-semibold mb-4">快速诊断 (Human-in-the-loop)</h2>
-                <textarea id="problem" class="w-full p-2 border rounded mb-4" rows="4" placeholder="描述您的核心问题..."></textarea>
-                <div class="flex items-center mb-4">
-                    <input type="checkbox" id="require-approval" class="mr-2">
-                    <label for="require-approval" class="text-sm text-gray-600">此动作需要人工审批 (HITL)</label>
+        <!-- BC 研究交付 Tab -->
+        <div id="tab-bc-research" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Solution & CS Intake -->
+                <div class="md:col-span-1 bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-lg font-bold mb-4 border-b pb-2">Solution & CS Intake</h2>
+                    <div class="space-y-4 text-sm">
+                        <div>
+                            <label class="block font-medium">公司阶段</label>
+                            <select id="company_stage" class="w-full p-2 border rounded">
+                                <option>小微创新</option>
+                                <option>规模发展</option>
+                                <option>成熟</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-medium">业务阶段</label>
+                            <select id="biz_stage" class="w-full p-2 border rounded">
+                                <option value="0-1">0-1：先做 demo</option>
+                                <option value="1-10">1-10：跑 PMF</option>
+                                <option value="10-100">10-100：规模化增长</option>
+                                <option value="100-1k">100-1k：扎根垂类心智</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-medium">核心卡点</label>
+                            <select id="core_bottleneck" class="w-full p-2 border rounded">
+                                <option>获客成本高</option>
+                                <option>转化率低</option>
+                                <option>留存差</option>
+                                <option>付费率低</option>
+                                <option>信任-履约-品牌问题</option>
+                            </select>
+                        </div>
+                        <button onclick="runBCResearch()" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">生成研究交付件</button>
+                    </div>
                 </div>
-                <button onclick="runDiagnose()" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">开始 AI 诊断</button>
-            </div>
-            <div id="result" class="bg-white p-6 rounded-lg shadow-md hidden">
-                <h2 class="text-xl font-semibold mb-4">实时输出</h2>
-                <pre id="output" class="bg-gray-100 p-4 rounded text-sm overflow-auto max-h-96"></pre>
+
+                <!-- 交付物展示 -->
+                <div class="md:col-span-2 space-y-6">
+                    <div id="bc-result-placeholder" class="bg-gray-100 h-64 rounded-lg flex items-center justify-center text-gray-400 italic">
+                        等待输入并生成产物...
+                    </div>
+                    <div id="bc-result-content" class="hidden space-y-6">
+                        <!-- 5 件套产物容器 -->
+                        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+                            <h3 class="font-bold text-green-700 mb-2">1. 增长问题树</h3>
+                            <div id="product-tree" class="text-sm space-y-1"></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+                            <h3 class="font-bold text-blue-700 mb-2">2. 研究包 (Research Kit)</h3>
+                            <div id="product-kit" class="text-sm space-y-1"></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
+                            <h3 class="font-bold text-purple-700 mb-2">3. 洞察卡片 (Evidence-based)</h3>
+                            <div id="product-cards" class="space-y-2"></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-orange-500">
+                            <h3 class="font-bold text-orange-700 mb-2">4. 增长排期</h3>
+                            <div id="product-roadmap" class="text-sm"></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-500">
+                            <h3 class="font-bold text-red-700 mb-2">5. 管理层报告</h3>
+                            <div id="product-report" class="text-sm italic"></div>
+                            <button class="mt-4 bg-gray-200 text-gray-600 px-4 py-1 rounded text-xs cursor-not-allowed">需审批后发布 (HITL)</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Trace 监控 Tab -->
         <div id="tab-traces" class="tab-content hidden">
             <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-semibold mb-4">决策链路追溯 (Traceable)</h2>
+                <h2 class="text-xl font-semibold mb-4">全链路 Traceable 监控</h2>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left border-collapse text-sm">
                         <thead>
                             <tr class="bg-gray-100">
                                 <th class="p-2 border">时间</th>
@@ -77,29 +139,17 @@
 
     <script>
         // 配置管理
-        let API_BASE = window.location.origin.includes('localhost') ? 'http://localhost:8000' : '';
-        
+        let API_BASE = localStorage.getItem('research_os_base') || 'http://47.101.155.238:8000';
+        let API_KEY = localStorage.getItem('research_os_key') || 'admin123';
+
         function saveConfig() {
-            const key = document.getElementById('api-key').value;
-            localStorage.setItem('research_os_key', key);
-            alert('配置已保存');
+            localStorage.setItem('research_os_base', document.getElementById('api-base').value);
+            localStorage.setItem('research_os_key', document.getElementById('api-key').value);
+            location.reload();
         }
 
         function getHeaders() {
-            return {
-                'Content-Type': 'application/json',
-                'X-API-Key': localStorage.getItem('research_os_key') || 'admin123'
-            };
-        }
-
-        async function init() {
-            // 尝试从 config.json 加载后端地址（如果存在）
-            try {
-                const res = await fetch('/config.json');
-                const config = await res.json();
-                API_BASE = config.API_BASE;
-            } catch(e) {}
-            document.getElementById('api-url-display').innerText = API_BASE || '当前域名';
+            return { 'Content-Type': 'application/json', 'X-API-Key': API_KEY };
         }
 
         function showTab(tabId) {
@@ -107,31 +157,77 @@
             document.getElementById('tab-' + tabId).classList.remove('hidden');
             if(tabId === 'traces') loadTraces();
             if(tabId === 'approvals') loadApprovals();
+            if(tabId === 'config') {
+                document.getElementById('api-base').value = API_BASE;
+                document.getElementById('api-key').value = API_KEY;
+            }
         }
 
-        async function runDiagnose() {
-            const problem = document.getElementById('problem').value;
-            const requireApproval = document.getElementById('require-approval').checked;
-            const res = await fetch(`${API_BASE}/api/v1/diagnose`, {
-                method: 'POST',
-                headers: getHeaders(),
-                body: JSON.stringify({core_problem: problem, growth_driver: ['PLG'], require_approval: requireApproval})
-            });
-            const data = await res.json();
-            document.getElementById('result').classList.remove('hidden');
-            document.getElementById('output').innerText = JSON.stringify(data, null, 2);
+        async function runBCResearch() {
+            const payload = {
+                company_stage: document.getElementById('company_stage').value,
+                biz_stage: document.getElementById('biz_stage').value,
+                core_bottleneck: document.getElementById('core_bottleneck').value
+            };
+            
+            const btn = event.target;
+            btn.innerText = "生成中...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/v1/bc_growth_research`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                renderProducts(data.data.products);
+            } catch(e) {
+                alert("请求失败，请检查 API 地址和安全组设置");
+            } finally {
+                btn.innerText = "生成研究交付件";
+                btn.disabled = false;
+            }
+        }
+
+        function renderProducts(p) {
+            document.getElementById('bc-result-placeholder').classList.add('hidden');
+            document.getElementById('bc-result-content').classList.remove('hidden');
+            
+            document.getElementById('product-tree').innerHTML = `
+                <p><b>问题:</b> ${p.growth_problem_tree.problem}</p>
+                <p><b>假设:</b> ${p.growth_problem_tree.hypothesis}</p>
+                <p><b>证据:</b> <span class="text-blue-600 underline">${p.growth_problem_tree.evidence}</span></p>
+            `;
+            document.getElementById('product-kit').innerHTML = `
+                <p><b>问卷:</b> ${p.research_kit.survey_q.join(' / ')}</p>
+                <p><b>配额:</b> ${p.research_kit.quota}</p>
+            `;
+            document.getElementById('product-cards').innerHTML = p.insight_cards.map(c => `
+                <div class="bg-purple-50 p-2 rounded border border-purple-100">
+                    <p class="font-bold text-purple-800">${c.title}</p>
+                    <p class="text-xs">${c.content}</p>
+                    <p class="text-xs text-gray-500 mt-1">Evidence: ${c.evidence}</p>
+                </div>
+            `).join('');
+            document.getElementById('product-roadmap').innerHTML = p.growth_roadmap.map(r => `
+                <div class="flex justify-between border-b py-1">
+                    <span>${r.phase}: ${r.action}</span>
+                    <span class="text-orange-600 font-mono">${r.metric_threshold}</span>
+                </div>
+            `).join('');
+            document.getElementById('product-report').innerText = p.management_report.summary;
         }
 
         async function loadTraces() {
             const res = await fetch(`${API_BASE}/api/v1/traces`, { headers: getHeaders() });
             const data = await res.json();
-            const list = document.getElementById('trace-list');
-            list.innerHTML = data.map(t => `
+            document.getElementById('trace-list').innerHTML = data.map(t => `
                 <tr>
                     <td class="p-2 border text-xs">${new Date(t.timestamp).toLocaleString()}</td>
-                    <td class="p-2 border font-mono text-sm">${t.step_name}</td>
-                    <td class="p-2 border"><span class="px-2 py-1 rounded text-xs ${t.status === 'SUCCESS' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${t.status}</span></td>
-                    <td class="p-2 border"><button onclick='alert(JSON.stringify(${t.output_data}, null, 2))' class="text-blue-600 hover:underline text-sm">查看</button></td>
+                    <td class="p-2 border font-mono text-xs">${t.step_name}</td>
+                    <td class="p-2 border"><span class="px-2 py-0.5 rounded text-xs ${t.status === 'SUCCESS' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${t.status}</span></td>
+                    <td class="p-2 border"><button onclick='console.log(${t.output_data})' class="text-blue-600 hover:underline text-xs">控制台查看</button></td>
                 </tr>
             `).join('');
         }
@@ -140,17 +236,14 @@
             const res = await fetch(`${API_BASE}/api/v1/approvals/pending`, { headers: getHeaders() });
             const data = await res.json();
             const list = document.getElementById('approval-list');
-            if(data.length === 0) { list.innerHTML = '<p class="text-gray-500">暂无待审批任务</p>'; return; }
+            if(data.length === 0) { list.innerHTML = '<p class="text-gray-500 text-sm">暂无待审批任务</p>'; return; }
             list.innerHTML = data.map(a => `
-                <div class="border p-4 rounded bg-gray-50">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="font-bold text-blue-600">${a.action_type}</span>
-                        <span class="text-xs text-gray-400">${a.id}</span>
-                    </div>
-                    <pre class="text-xs bg-white p-2 mb-4 overflow-auto max-h-24">${a.payload}</pre>
+                <div class="border p-4 rounded bg-gray-50 text-sm">
+                    <p class="font-bold text-blue-700">${a.action_type}</p>
+                    <pre class="text-xs bg-white p-2 my-2 overflow-auto max-h-24">${a.payload}</pre>
                     <div class="flex space-x-2">
-                        <button onclick="approve('${a.id}', 'APPROVED')" class="bg-green-500 text-white px-3 py-1 rounded text-sm">通过</button>
-                        <button onclick="approve('${a.id}', 'REJECTED')" class="bg-red-500 text-white px-3 py-1 rounded text-sm">拒绝</button>
+                        <button onclick="approve('${a.id}', 'APPROVED')" class="bg-green-600 text-white px-3 py-1 rounded">通过</button>
+                        <button onclick="approve('${a.id}', 'REJECTED')" class="bg-red-600 text-white px-3 py-1 rounded">拒绝</button>
                     </div>
                 </div>
             `).join('');
@@ -163,8 +256,6 @@
             });
             loadApprovals();
         }
-
-        init();
     </script>
 </body>
 </html>
