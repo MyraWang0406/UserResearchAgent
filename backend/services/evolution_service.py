@@ -1,82 +1,105 @@
 import uuid
 from typing import Dict, Any, List
+from ..core.evermem_client import memory_os
 
 def process_interview_to_initial_prd(interview_text: str) -> Dict[str, Any]:
     """
-    MVP 功能 1 & 2: 输入访谈文本，生成画像、假设和初始 PRD
+    组织决策记忆链路：Evidence -> Decision -> Requirement
     """
-    # 模拟 Agent 提取逻辑
-    version_id = f"v1_{str(uuid.uuid4())[:6]}"
-    
-    persona = {
-        "name": "小微企业主",
-        "pain_points": ["获客成本高", "缺乏专业营销知识"],
-        "goals": ["低成本获取精准线索"]
+    # 1. 提交 Context Cell (假设当前上下文)
+    context_data = {
+        "business_type": "B2B SaaS",
+        "growth_mode": ["PLG"],
+        "company_stage": "1-10",
+        "leadership_style": "Data-Driven",
+        "employee_needs": ["Efficiency"],
+        "north_star_metric": "CVR"
     }
-    
-    hypotheses = [
-        {"id": "H1", "statement": "如果提供 AI 自动生成素材功能，那么转化率会提升 20%，因为解决了素材生产门槛。", "status": "PENDING"},
-        {"id": "H2", "statement": "如果集成一键投放功能，那么留存会提升，因为简化了操作链路。", "status": "PENDING"}
-    ]
-    
-    prd_md = f"""# PRD v1.0 - AI 营销助手
-## 核心功能
-1. **AI 素材生成**: 支持文字转图片。
-2. **一键投放**: 对接主流广告平台。
-## 优先级
-- P0: 素材生成
-- P1: 一键投放
-"""
-    
+    tags = {"domain": "saas", "stage": "1-10", "growth": "PLG"}
+    context_id = memory_os.commit_cell("Context", context_data, tags)
+
+    # 2. 提交 Evidence Cell
+    evidence_data = {
+        "source_type": "Interview",
+        "content": interview_text,
+        "reliability_score": 0.9
+    }
+    evidence_id = memory_os.commit_cell("Evidence", evidence_data, tags)
+
+    # 3. 提交 Decision Cell
+    decision_data = {
+        "topic": "Initial Feature Set",
+        "logic": "基于访谈证据，确定核心功能为 AI 素材生成以提升转化。",
+        "citations": [evidence_id]
+    }
+    decision_id = memory_os.commit_cell("Decision", decision_data, tags, citations=[evidence_id])
+
+    # 4. 提交 Requirement Cell
+    requirement_data = {
+        "req_type": "Functional",
+        "prd_format": "Markdown",
+        "content": "# PRD v1.0\n1. AI 素材生成\n2. 一键投放",
+        "value_score": 8.5,
+        "cost_estimate": "2 weeks",
+        "derived_from": [decision_id]
+    }
+    requirement_id = memory_os.commit_cell("Requirement", requirement_data, tags, citations=[decision_id])
+
     return {
-        "version_id": version_id,
-        "persona": persona,
-        "hypotheses": hypotheses,
-        "prd_markdown": prd_md,
-        "iteration_count": 1
+        "version_id": requirement_id,
+        "context_id": context_id,
+        "evidence_id": evidence_id,
+        "decision_id": decision_id,
+        "prd_markdown": requirement_data['content'],
+        "persona": {"name": "小微企业主"}, # 保持兼容
+        "hypotheses": [{"id": "H1", "statement": "AI素材提升转化", "status": "PENDING"}]
     }
 
 def evolve_requirements_by_metrics(current_snapshot: Dict[str, Any], metrics: Dict[str, Any]) -> Dict[str, Any]:
     """
-    MVP 功能 4 & 5: 输入指标数据，自动判断假设证伪并调整需求
+    演化链路：Outcome -> Decision -> New Requirement
     """
-    parent_version = current_snapshot['version_id']
-    new_version_id = f"v2_{str(uuid.uuid4())[:6]}"
+    tags = {"domain": "saas", "stage": "1-10", "growth": "PLG"}
     
-    # 模拟 Agent 分析逻辑
-    # 假设指标显示 CVR 极低
-    cvr = metrics.get("cvr", 0)
-    evolution_logs = []
-    new_hypotheses = [h.copy() for h in current_snapshot['hypotheses']]
-    
-    if cvr < 0.02: # 证伪 H1
-        for h in new_hypotheses:
-            if h['id'] == "H1":
-                h['status'] = "FALSIFIED"
-                evolution_logs.append({
-                    "version_id": new_version_id,
-                    "change_type": "FALSIFIED",
-                    "target_requirement": "AI 素材生成",
-                    "reasoning": f"指标 CVR={cvr*100}% 低于预期，证伪了‘AI素材能直接提升转化’的假设。",
-                    "evidence_metric": metrics
-                })
-    
-    # 调整 PRD
-    new_prd_md = current_snapshot['prd_markdown'].replace(
-        "1. **AI 素材生成**: 支持文字转图片。",
-        "1. **AI 素材生成 (已调整)**: 增加人工审核环节，确保素材质量。"
-    )
-    
-    new_snapshot = {
-        "version_id": new_version_id,
-        "parent_version_id": parent_version,
-        "persona": current_snapshot['persona'],
-        "hypotheses": new_hypotheses,
-        "prd_markdown": new_prd_md,
-        "iteration_count": current_snapshot['iteration_count'] + 1
+    # 1. 提交 Outcome Cell
+    outcome_data = {
+        "metrics_feedback": metrics,
+        "impact_score": 0.4,
+        "falsified_hypotheses": ["H1"] if metrics.get("cvr", 0) < 0.02 else [],
+        "linked_requirement": current_snapshot['version_id']
     }
-    
+    outcome_id = memory_os.commit_cell("Outcome", outcome_data, tags)
+
+    # 2. 提交演化 Decision Cell
+    evo_decision_data = {
+        "topic": "Requirement Pivot",
+        "logic": f"由于指标未达标 ({metrics}), 决定调整 AI 素材生成逻辑。",
+        "citations": [outcome_id]
+    }
+    evo_decision_id = memory_os.commit_cell("Decision", evo_decision_data, tags, citations=[outcome_id])
+
+    # 3. 提交新 Requirement Cell
+    new_requirement_data = {
+        "req_type": "Functional",
+        "prd_format": "Markdown",
+        "content": "# PRD v2.0\n1. AI 素材生成 (增加人工审核)",
+        "value_score": 9.0,
+        "cost_estimate": "1 week",
+        "derived_from": [evo_decision_id]
+    }
+    new_requirement_id = memory_os.commit_cell("Requirement", new_requirement_data, tags, citations=[evo_decision_id])
+
     return {
-        "new_snapshot": new_snapshot,
-        "evolution_logs": evolution_logs
+        "new_snapshot": {
+            "version_id": new_requirement_id,
+            "prd_markdown": new_requirement_data['content'],
+            "persona": current_snapshot['persona'],
+            "hypotheses": [{"id": "H1", "statement": "AI素材提升转化", "status": "FALSIFIED"}]
+        },
+        "evolution_logs": [{
+            "version_id": new_requirement_id,
+            "change_type": "EVOLVED",
+            "reasoning": evo_decision_data['logic'],
+            "evidence_metric": metrics
+        }]
     }
