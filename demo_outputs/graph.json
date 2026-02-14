@@ -1,92 +1,66 @@
 {
   "nodes": [
     {
-      "id": "context_1771075354.530077",
-      "type": "Context",
-      "tags": [
-        "domain:saas",
-        "stage:1-10",
-        "growth:PLG",
-        "type:context"
-      ]
-    },
-    {
-      "id": "evidence_1771075354.530177",
+      "id": "evidence_1771075625.992055",
       "type": "Evidence",
-      "tags": [
-        "domain:saas",
-        "stage:1-10",
-        "growth:PLG",
-        "type:evidence"
-      ]
+      "summary": "..."
     },
     {
-      "id": "decision_1771075354.530203",
+      "id": "decision_1771075625.992152",
       "type": "Decision",
-      "tags": [
-        "domain:saas",
-        "stage:1-10",
-        "growth:PLG",
-        "type:decision"
-      ]
+      "summary": "Initial requirement generation based on interview."
     },
     {
-      "id": "requirement_1771075354.530225",
+      "id": "requirement_1771075625.992179",
       "type": "Requirement",
-      "tags": [
-        "domain:saas",
-        "stage:1-10",
-        "growth:PLG",
-        "type:requirement"
-      ]
+      "summary": "..."
     },
     {
-      "id": "outcome_1771075354.530264",
+      "id": "outcome_1771075625.992262",
       "type": "Outcome",
-      "tags": [
-        "domain:saas",
-        "stage:1-10",
-        "growth:PLG",
-        "type:outcome"
-      ]
+      "summary": "..."
     },
     {
-      "id": "decision_1771075354.530286",
+      "id": "decision_1771075625.992308",
       "type": "Decision",
-      "tags": [
-        "domain:saas",
-        "stage:1-10",
-        "growth:PLG",
-        "type:decision"
-      ]
+      "summary": "Metrics FALSIFY previous hypothesis."
     },
     {
-      "id": "requirement_1771075354.530302",
+      "id": "evidence_1771075625.992443",
+      "type": "Evidence",
+      "summary": "..."
+    },
+    {
+      "id": "decision_1771075625.99247",
+      "type": "Decision",
+      "summary": "Initial requirement generation based on interview."
+    },
+    {
+      "id": "requirement_1771075625.992501",
       "type": "Requirement",
-      "tags": [
-        "domain:saas",
-        "stage:1-10",
-        "growth:PLG",
-        "type:requirement"
-      ]
+      "summary": "..."
     }
   ],
   "edges": [
     {
-      "source": "evidence_1771075354.530177",
-      "target": "decision_1771075354.530203"
+      "source": "evidence_1771075625.992055",
+      "target": "decision_1771075625.992152"
     },
     {
-      "source": "decision_1771075354.530203",
-      "target": "requirement_1771075354.530225"
+      "source": "decision_1771075625.992152",
+      "target": "requirement_1771075625.992179"
     },
     {
-      "source": "outcome_1771075354.530264",
-      "target": "decision_1771075354.530286"
+      "source": "outcome_1771075625.992262",
+      "target": "decision_1771075625.992308"
     },
     {
-      "source": "decision_1771075354.530286",
-      "target": "requirement_1771075354.530302"
+      "source": "evidence_1771075625.992443",
+      "target": "decision_1771075625.99247"
+    },
+    {
+      "source": "decision_1771075625.99247",
+      "target": "requirement_1771075625.992501"
     }
   ]
 }

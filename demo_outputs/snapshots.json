@@ -1,50 +1,38 @@
 [
   {
-    "id": "requirement_1771075354.530302",
+    "id": "requirement_1771075625.992501",
     "type": "Requirement",
     "data": {
-      "req_type": "Functional",
-      "prd_format": "Markdown",
-      "content": "# PRD v2.0\n1. AI 素材生成 (增加人工审核)",
-      "value_score": 9.0,
-      "cost_estimate": "1 week",
-      "derived_from": [
-        "decision_1771075354.530286"
-      ]
+      "scope_summary": "PRD Content",
+      "version": "v1.0"
     },
     "tags": [
-      "domain:saas",
+      "domain:fintech",
       "stage:1-10",
       "growth:PLG",
       "type:requirement"
     ],
     "citations": [
-      "decision_1771075354.530286"
+      "decision_1771075625.99247"
     ],
-    "timestamp": "2026-02-14T08:22:34.530315"
+    "timestamp": "2026-02-14T08:27:05.992519"
   },
   {
-    "id": "requirement_1771075354.530225",
+    "id": "requirement_1771075625.992179",
     "type": "Requirement",
     "data": {
-      "req_type": "Functional",
-      "prd_format": "Markdown",
-      "content": "# PRD v1.0\n1. AI 素材生成\n2. 一键投放",
-      "value_score": 8.5,
-      "cost_estimate": "2 weeks",
-      "derived_from": [
-        "decision_1771075354.530203"
-      ]
+      "scope_summary": "PRD Content",
+      "version": "v1.0"
     },
     "tags": [
-      "domain:saas",
+      "domain:fintech",
       "stage:1-10",
       "growth:PLG",
       "type:requirement"
     ],
     "citations": [
-      "decision_1771075354.530203"
+      "decision_1771075625.992152"
     ],
-    "timestamp": "2026-02-14T08:22:34.530236"
+    "timestamp": "2026-02-14T08:27:05.992188"
   }
 ]

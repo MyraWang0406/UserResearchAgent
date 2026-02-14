@@ -4,17 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, Any, List, Optional
 import os
 import json
+from datetime import datetime
 
-from ..core.engine import engine
-from ..core.database import (
-    init_db, save_trace, get_all_traces, 
-    save_snapshot, save_evolution_log, get_latest_snapshot
-)
+from ..core.database import init_db, save_trace, get_all_traces
 from ..core.evermem_client import memory_os
-from ..services.evolution_service import process_interview_to_initial_prd, evolve_requirements_by_metrics
-from ..schemas.evolution import EvidenceCell, DecisionCell, RequirementCell
+from ..schemas.memory_cells import EvidenceCell, DecisionCell, RequirementCell, CellType
 
-app = FastAPI(title="Research OS v1.2 - Decision Loop", version="1.2.1")
+app = FastAPI(title="Decision Memory MVP", version="1.3.0")
 
 # 环境变量配置
 API_KEY = os.getenv("API_KEY", "admin123")
@@ -39,30 +35,60 @@ async def verify_token(x_api_key: str = Header(None)):
 
 @app.get("/health")
 def health():
-    return {"status": "healthy", "version": "1.2.1"}
+    return {"status": "healthy", "track": "Memory Genesis Track 1"}
 
-# --- 企业决策援引闭环 API ---
+# --- Decision Memory MVP API ---
 
 @app.post("/api/v1/evidence")
 async def create_evidence(payload: EvidenceCell, token: str = Depends(verify_token)):
     """创建证据卡片"""
-    evidence_id = memory_os.commit_cell("Evidence", payload.dict(), tags={"type": "evidence", "domain": "enterprise"})
-    save_trace({
-        "trace_id": f"tr_{evidence_id}",
-        "step_name": "create_evidence",
-        "input_data": payload.dict(),
-        "output_data": {"evidence_id": evidence_id},
-        "status": "SUCCESS"
-    })
+    evidence_id = memory_os.commit_cell("Evidence", payload.dict(), tags={"type": "evidence"})
     return {"evidence_id": evidence_id}
 
 @app.get("/api/v1/evidence/search")
-async def search_evidence(token: str = Depends(verify_token)):
-    """搜索所有证据"""
-    return memory_os.recall_by_tags({"type": "evidence"})
+async def search_evidence(q: str = "", tags: str = "", token: str = Depends(verify_token)):
+    """搜索证据"""
+    query_tags = {"type": "evidence"}
+    if tags:
+        for t in tags.split(","):
+            k, v = t.split(":")
+            query_tags[k] = v
+    return memory_os.recall_by_tags(query_tags)
+
+@app.post("/api/v1/decision")
+async def create_decision(payload: DecisionCell, token: str = Depends(verify_token)):
+    """创建决策：强制援引校验"""
+    if not payload.citations:
+        raise HTTPException(status_code=400, detail="Decision must cite at least one evidence.")
+    
+    decision_id = memory_os.commit_cell("Decision", payload.dict(), tags={"type": "decision"}, citations=payload.citations)
+    save_trace({
+        "trace_id": f"tr_{decision_id}",
+        "step_name": "decision_making",
+        "input_data": payload.dict(),
+        "output_data": {"decision_id": decision_id},
+        "status": "SUCCESS"
+    })
+    return {"decision_id": decision_id}
+
+@app.post("/api/v1/requirement/version")
+async def create_requirement(payload: RequirementCell, token: str = Depends(verify_token)):
+    """创建需求版本：必须绑定决策/证据"""
+    if not payload.derived_from:
+        raise HTTPException(status_code=400, detail="Requirement must be derived from a decision or evidence.")
+    
+    req_id = memory_os.commit_cell("Requirement", payload.dict(), tags={"type": "requirement"}, citations=payload.derived_from)
+    save_trace({
+        "trace_id": f"tr_{req_id}",
+        "step_name": "requirement_generation",
+        "input_data": payload.dict(),
+        "output_data": {"requirement_id": req_id},
+        "status": "SUCCESS"
+    })
+    return {"requirement_id": req_id}
 
 @app.get("/api/v1/trace_graph")
-async def get_trace_graph(token: str = Depends(verify_token)):
+async def get_trace_graph(topic: str = "", stage: str = "", token: str = Depends(verify_token)):
     """
     返回溯源图谱 (Nodes/Edges)
     """
@@ -70,40 +96,20 @@ async def get_trace_graph(token: str = Depends(verify_token)):
     nodes = []
     edges = []
     for cell in cells:
+        # 简单的过滤逻辑
+        if topic and topic not in cell['tags']: continue
+        
         nodes.append({
             "id": cell['id'], 
             "label": cell['type'], 
-            "content": json.loads(cell['content']).get('content', cell['type']),
+            "summary": json.loads(cell['content']).get('summary', cell['type']),
             "timestamp": cell['timestamp']
         })
+        # 建立引用边
         for ref in cell.get('citations', []):
-            edges.append({"source": ref, "target": cell['id']})
+            edges.append({"source": ref, "target": cell['id'], "type": "cites"})
+            
     return {"nodes": nodes, "edges": edges}
-
-# --- 兼容旧有 MRE 流程 ---
-
-@app.post("/api/v1/mre/intake")
-async def mre_intake(payload: Dict[str, Any], token: str = Depends(verify_token)):
-    interview_text = payload.get("interview_text", "")
-    result = engine.execute_step("mre_intake", process_interview_to_initial_prd, interview_text)
-    save_snapshot(result['data'])
-    save_trace(result)
-    return result
-
-@app.post("/api/v1/mre/evolve")
-async def mre_evolve(payload: Dict[str, Any], token: str = Depends(verify_token)):
-    metrics = payload.get("metrics", {})
-    current_snapshot = get_latest_snapshot()
-    if not current_snapshot:
-        raise HTTPException(status_code=400, detail="No existing snapshot found.")
-    
-    result = engine.execute_step("mre_evolve", evolve_requirements_by_metrics, current_snapshot, metrics)
-    data = result['data']
-    save_snapshot(data['new_snapshot'])
-    for log in data['evolution_logs']:
-        save_evolution_log(log)
-    save_trace(result)
-    return result
 
 @app.get("/api/v1/traces")
 async def list_traces(token: str = Depends(verify_token)):

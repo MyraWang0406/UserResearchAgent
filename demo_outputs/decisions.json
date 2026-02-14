@@ -1,44 +1,57 @@
 [
   {
-    "id": "decision_1771075354.530286",
+    "id": "decision_1771075625.99247",
     "type": "Decision",
     "data": {
-      "topic": "Requirement Pivot",
-      "logic": "由于指标未达标 ({'cvr': 0.012, 'retention': 0.15}), 决定调整 AI 素材生成逻辑。",
-      "citations": [
-        "outcome_1771075354.530264"
-      ]
+      "rationale": "Initial requirement generation based on interview.",
+      "decision_type": "Requirement_Gen"
     },
     "tags": [
-      "domain:saas",
+      "domain:fintech",
       "stage:1-10",
       "growth:PLG",
       "type:decision"
     ],
     "citations": [
-      "outcome_1771075354.530264"
+      "evidence_1771075625.992443"
     ],
-    "timestamp": "2026-02-14T08:22:34.530294"
+    "timestamp": "2026-02-14T08:27:05.992485"
   },
   {
-    "id": "decision_1771075354.530203",
+    "id": "decision_1771075625.992308",
     "type": "Decision",
     "data": {
-      "topic": "Initial Feature Set",
-      "logic": "基于访谈证据，确定核心功能为 AI 素材生成以提升转化。",
-      "citations": [
-        "evidence_1771075354.530177"
-      ]
+      "rationale": "Metrics FALSIFY previous hypothesis.",
+      "decision_type": "Evolution"
     },
     "tags": [
-      "domain:saas",
+      "domain:fintech",
+      "stage:1-10",
+      "growth:PLG",
+      "FALSIFIED:true",
+      "type:decision"
+    ],
+    "citations": [
+      "outcome_1771075625.992262"
+    ],
+    "timestamp": "2026-02-14T08:27:05.992317"
+  },
+  {
+    "id": "decision_1771075625.992152",
+    "type": "Decision",
+    "data": {
+      "rationale": "Initial requirement generation based on interview.",
+      "decision_type": "Requirement_Gen"
+    },
+    "tags": [
+      "domain:fintech",
       "stage:1-10",
       "growth:PLG",
       "type:decision"
     ],
     "citations": [
-      "evidence_1771075354.530177"
+      "evidence_1771075625.992055"
     ],
-    "timestamp": "2026-02-14T08:22:34.530214"
+    "timestamp": "2026-02-14T08:27:05.992165"
   }
 ]
