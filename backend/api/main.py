@@ -5,11 +5,13 @@ from typing import Dict, Any, List, Optional
 import os
 
 from ..core.engine import engine
-from ..core.database import init_db, save_trace, get_all_traces, create_approval, update_approval, get_pending_approvals
-from ..services.research_service import diagnose_with_growth_logic, generate_survey_v2
-from ..services.bc_growth_service import run_bc_growth_research
+from ..core.database import (
+    init_db, save_trace, get_all_traces, 
+    save_snapshot, save_evolution_log, get_latest_snapshot
+)
+from ..services.evolution_service import process_interview_to_initial_prd, evolve_requirements_by_metrics
 
-app = FastAPI(title="Research OS API", version="1.1.0")
+app = FastAPI(title="MRE MVP API", version="1.2.0")
 
 # 环境变量配置
 API_KEY = os.getenv("API_KEY", "admin123")
@@ -27,62 +29,55 @@ app.add_middleware(
 def startup():
     init_db()
 
-# 简单鉴权中间件
 async def verify_token(x_api_key: str = Header(None)):
     if x_api_key != API_KEY:
-        raise HTTPException(status_code=401, detail="Unauthorized: Invalid API Key")
+        raise HTTPException(status_code=401, detail="Unauthorized")
     return x_api_key
 
 @app.get("/health")
 def health():
-    return {"status": "healthy", "version": "1.1.0"}
+    return {"status": "healthy", "mre_version": "1.2.0"}
 
-@app.get("/ping")
-async def ping(token: str = Depends(verify_token)):
-    return {"message": "pong", "status": "authenticated"}
+# --- MRE MVP 核心接口 ---
 
-# --- 核心业务接口 ---
-@app.post("/api/v1/bc_growth_research")
-async def bc_growth_research(payload: Dict[str, Any], token: str = Depends(verify_token)):
-    result = engine.execute_step("bc_growth_research", run_bc_growth_research, payload)
+@app.post("/api/v1/mre/intake")
+async def mre_intake(payload: Dict[str, Any], token: str = Depends(verify_token)):
+    """
+    输入访谈文本，生成初始 Snapshot
+    """
+    interview_text = payload.get("interview_text", "")
+    result = engine.execute_step("mre_intake", process_interview_to_initial_prd, interview_text)
+    
+    # 持久化 Snapshot
+    save_snapshot(result['data'])
     save_trace(result)
     return result
 
-@app.post("/api/v1/diagnose")
-async def diagnose(payload: Dict[str, Any], token: str = Depends(verify_token)):
-    result = engine.execute_step("diagnose", diagnose_with_growth_logic, payload)
+@app.post("/api/v1/mre/evolve")
+async def mre_evolve(payload: Dict[str, Any], token: str = Depends(verify_token)):
+    """
+    输入指标数据，演化需求
+    """
+    metrics = payload.get("metrics", {})
+    current_snapshot = get_latest_snapshot()
+    if not current_snapshot:
+        raise HTTPException(status_code=400, detail="No existing snapshot found. Run intake first.")
+    
+    result = engine.execute_step("mre_evolve", evolve_requirements_by_metrics, current_snapshot, metrics)
+    
+    # 持久化新的 Snapshot 和演化日志
+    data = result['data']
+    save_snapshot(data['new_snapshot'])
+    for log in data['evolution_logs']:
+        save_evolution_log(log)
+    
     save_trace(result)
     return result
 
-# --- Trace & HITL 接口 ---
+@app.get("/api/v1/mre/latest")
+async def get_latest(token: str = Depends(verify_token)):
+    return get_latest_snapshot()
+
 @app.get("/api/v1/traces")
 async def list_traces(token: str = Depends(verify_token)):
     return get_all_traces()
-
-@app.get("/api/v1/approvals/pending")
-async def list_pending_approvals(token: str = Depends(verify_token)):
-    return get_pending_approvals()
-
-@app.post("/api/v1/approve")
-async def approve_action(approval_id: str, decision: str, comment: str = "", token: str = Depends(verify_token)):
-    update_approval(approval_id, decision, "admin", comment)
-    return {"status": "success", "approval_id": approval_id, "decision": decision}
-
-# --- MCP HTTP 网关 ---
-@app.get("/mcp/tools")
-async def list_mcp_tools():
-    return {
-        "tools": [
-            {"name": "bc_growth_research", "description": "执行 BC 双端有限规模增长研究", "input_schema": {"type": "object"}},
-            {"name": "diagnose", "description": "执行 AI 业务诊断", "input_schema": {"type": "object"}}
-        ]
-    }
-
-@app.post("/mcp/call")
-async def call_mcp_tool(tool_name: str, arguments: Dict[str, Any], token: str = Depends(verify_token)):
-    if tool_name == "bc_growth_research":
-        return await bc_growth_research(arguments, token)
-    elif tool_name == "diagnose":
-        return await diagnose(arguments, token)
-    else:
-        raise HTTPException(status_code=404, detail="Tool not found")

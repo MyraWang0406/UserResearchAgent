@@ -8,7 +8,7 @@ DB_PATH = "research_os.db"
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
-        # Trace 表
+        # 基础 Trace 表
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS traces (
                 trace_id TEXT PRIMARY KEY,
@@ -21,16 +21,27 @@ def init_db():
                 timestamp DATETIME
             )
         ''')
-        # HITL 审批表
+        # MRE: 需求快照表 (Memory Snapshot)
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS approvals (
-                id TEXT PRIMARY KEY,
-                action_type TEXT,
-                payload TEXT,
-                status TEXT,
-                requester_id TEXT,
-                approver_id TEXT,
-                comment TEXT,
+            CREATE TABLE IF NOT EXISTS requirement_snapshots (
+                version_id TEXT PRIMARY KEY,
+                parent_version_id TEXT,
+                persona_json TEXT,
+                hypotheses_json TEXT,
+                prd_markdown TEXT,
+                iteration_count INTEGER,
+                timestamp DATETIME
+            )
+        ''')
+        # MRE: 演化日志表 (Evolution Path)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS evolution_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                version_id TEXT,
+                change_type TEXT,
+                target_requirement TEXT,
+                reasoning TEXT,
+                evidence_metric TEXT,
                 timestamp DATETIME
             )
         ''')
@@ -50,36 +61,49 @@ def save_trace(trace: Dict[str, Any]):
         ))
         conn.commit()
 
+def save_snapshot(snapshot: Dict[str, Any]):
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO requirement_snapshots (version_id, parent_version_id, persona_json, hypotheses_json, prd_markdown, iteration_count, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            snapshot['version_id'], snapshot.get('parent_version_id'),
+            json.dumps(snapshot['persona']), json.dumps(snapshot['hypotheses']),
+            snapshot['prd_markdown'], snapshot.get('iteration_count', 0),
+            datetime.now().isoformat()
+        ))
+        conn.commit()
+
+def save_evolution_log(log: Dict[str, Any]):
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO evolution_logs (version_id, change_type, target_requirement, reasoning, evidence_metric, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            log['version_id'], log['change_type'], log.get('target_requirement'),
+            log['reasoning'], json.dumps(log.get('evidence_metric')),
+            datetime.now().isoformat()
+        ))
+        conn.commit()
+
+def get_latest_snapshot():
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM requirement_snapshots ORDER BY timestamp DESC LIMIT 1')
+        row = cursor.fetchone()
+        if row:
+            res = dict(row)
+            res['persona'] = json.loads(res['persona_json'])
+            res['hypotheses'] = json.loads(res['hypotheses_json'])
+            return res
+        return None
+
 def get_all_traces():
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM traces ORDER BY timestamp DESC')
-        return [dict(row) for row in cursor.fetchall()]
-
-def create_approval(approval: Dict[str, Any]):
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO approvals (id, action_type, payload, status, requester_id, timestamp)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            approval['id'], approval['action_type'], json.dumps(approval['payload']),
-            'PENDING', approval['requester_id'], datetime.now().isoformat()
-        ))
-        conn.commit()
-
-def update_approval(approval_id: str, status: str, approver_id: str, comment: str):
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            UPDATE approvals SET status = ?, approver_id = ?, comment = ? WHERE id = ?
-        ''', (status, approver_id, comment, approval_id))
-        conn.commit()
-
-def get_pending_approvals():
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM approvals WHERE status = 'PENDING'")
         return [dict(row) for row in cursor.fetchall()]
