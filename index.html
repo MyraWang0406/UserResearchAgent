@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>User Research Agent · Conversation OS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <style>
+    :root {
+      --blue-main: #2f6bff;
+      --blue-soft: #eaf0ff;
+      --accent-main: #2f6bff;
+      --accent-soft: #eaf0ff;
+      --accent-text: #1d4ed8;
+      --silver: #f4f6f8;
+      --silver-border: #d9dee5;
+      --text-main: #1f2937;
+      --text-sub: #6b7280;
+      --wave: rgba(47,107,255,0.08);
+      --ok: #0ea5e9;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+    }
+    * { box-sizing: border-box; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"PingFang SC","Hiragino Sans GB"; }
+    body {
+      margin: 0; padding: 0;
+      background:
+        radial-gradient(circle at 20% 0%, var(--wave), transparent 40%),
+        radial-gradient(circle at 80% 20%, var(--wave), transparent 45%),
+        #ffffff;
+      color: var(--text-main);
+    }
+    header { padding: 28px 40px 18px; border-bottom: 1px solid var(--silver-border); position: relative; }
+    header h1 { margin: 0; font-size: 26px; color: var(--accent-main); }
+    header p { margin-top: 6px; color: var(--text-sub); font-size: 14px; }
+    .lang-toggle {
+      position: absolute; top: 28px; right: 40px;
+      display: flex; gap: 6px; font-size: 13px; align-items: center;
+    }
+    .lang-btn {
+      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--silver-border);
+      background: #fff; color: var(--text-sub); cursor: pointer;
+    }
+    .lang-btn.active { border-color: var(--accent-main); color: var(--accent-main); background: var(--accent-soft); }
+    .lang-btn:hover { border-color: var(--accent-main); }
+    main { padding: 24px 40px 60px; }
+    .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; }
+    .card {
+      background: var(--silver);
+      border: 1px solid var(--silver-border);
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+    .card h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-main); }
+    label { display:block; font-size: 13px; margin-top: 12px; margin-bottom: 6px; color: var(--text-sub); }
+    select, textarea, input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--silver-border);
+      font-size: 14px;
+      background: #fff;
+    }
+    textarea { min-height: 78px; resize: vertical; }
+    .row { display:flex; gap: 12px; }
+    .row > div { flex: 1; }
+    .tabs { display:flex; gap: 10px; margin-bottom: 14px; }
+    .tab {
+      border: 1px solid var(--silver-border);
+      background: #fff;
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text-sub);
+      user-select: none;
+    }
+    .tab.active { border-color: var(--accent-main); color: var(--accent-main); background: var(--accent-soft); }
+    .btn {
+      margin-top: 16px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: none;
+      background: var(--accent-main);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn.secondary { background: #111827; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .output {
+      background: #fff;
+      border: 1px dashed var(--silver-border);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      min-height: 420px;
+    }
+    .pill { display:inline-block; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text); border: 1px solid rgba(47,107,255,.35); font-size: 12px; margin-right: 6px; }
+    .hint { color: var(--text-sub); font-size: 12px; margin-top: 8px; }
+    .growth-checkboxes { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 6px; }
+    .growth-checkboxes .growth-option { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-main); cursor: pointer; }
+    .growth-checkboxes input[type=checkbox] { width: auto; margin: 0; }
+    .small { font-size: 12px; color: var(--text-sub); }
+    footer { padding: 22px 40px; border-top: 1px solid var(--silver-border); color: var(--text-sub); font-size: 13px; }
+    a { color: var(--accent-main); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .tab-c-only { display: none; }
+    .tab-c-only.visible { display: block; }
+    .tab-c-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .graph-container {
+      height: 420px;
+      background: #fff;
+      border: 1px solid var(--silver-border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .proof-block {
+      background: #fff;
+      border: 1px solid var(--silver-border);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      margin-top: 12px;
+    }
+    .proof-block .line { margin-bottom: 8px; }
+    .proof-block .hint-text { color: var(--text-sub); font-size: 12px; margin-top: 10px; }
+    .comparison-module { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .comparison-col { background: #fff; border: 1px solid var(--silver-border); border-radius: 10px; padding: 14px; font-size: 13px; line-height: 1.55; }
+    .comparison-col h4 { margin: 0 0 10px; font-size: 14px; color: var(--accent-main); }
+    .comparison-col ul { margin: 0; padding-left: 18px; }
+    .comparison-col li { margin-bottom: 6px; }
+    .comparison-note { margin-top: 10px; font-size: 12px; color: var(--text-sub); font-style: italic; }
+    .rules-card { background: #fff; border: 1px solid var(--accent-main); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .rules-card h3 { margin: 0 0 12px; font-size: 15px; color: var(--accent-main); }
+    .rule-item { display: flex; gap: 10px; margin-bottom: 14px; font-size: 13px; line-height: 1.5; }
+    .rule-item:last-child { margin-bottom: 0; }
+    .rule-icon { flex-shrink: 0; font-size: 16px; }
+    .rule-text { flex: 1; }
+    .rule-en, .rule-zh { margin-bottom: 4px; font-weight: 500; color: var(--text-main); }
+    .rule-en.off, .rule-zh.off { display: none; }
+    .rules-footer { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--silver-border); font-size: 12px; color: var(--text-sub); font-style: italic; }
+    .node-detail {
+      background: #fff;
+      border: 1px dashed var(--silver-border);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 12px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 180px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .btn-sm { margin-top: 8px; margin-right: 8px; padding: 8px 14px; font-size: 13px; }
+    .err-msg { color: var(--bad); font-size: 13px; padding: 12px; }
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: #fff; border: 1px solid var(--accent-main); border-left: 4px solid var(--accent-main); border-radius: 12px; padding: 16px 20px; min-width: 320px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); display: flex; justify-content: space-between; gap: 12px; animation: toastIn 0.25s ease; }
+    .toast-body { flex: 1; }
+    .toast-title { font-weight: 600; color: var(--accent-main); margin-bottom: 6px; font-size: 14px; }
+    .toast-msg { font-size: 13px; color: var(--text-main); line-height: 1.5; }
+    .toast-close { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-sub); padding: 0 4px; line-height: 1; }
+    .toast-close:hover { color: var(--text-main); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    .ui-event-log { background: #fff; border: 1px dashed var(--silver-border); border-radius: 10px; padding: 12px; font-size: 12px; font-family: monospace; white-space: pre-wrap; max-height: 160px; overflow-y: auto; margin-top: 12px; color: var(--text-sub); }
+    .conflict-history-card { background: #fff; border: 1px solid var(--accent-main); border-radius: 14px; padding: 16px; margin-top: 14px; }
+    .conflict-history-card h4 { margin: 0 0 10px; font-size: 15px; color: var(--accent-main); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .conflict-demo-btn { padding: 6px 12px; font-size: 12px; border-radius: 10px; border: 1px solid rgba(47,107,255,.35); background: var(--accent-soft); color: var(--accent-text); cursor: pointer; }
+    .conflict-demo-btn:hover:not(:disabled) { filter: brightness(0.98); background: #d4e0ff; }
+    .conflict-demo-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    .conflict-history-card .proof-badge { background: var(--accent-main); color: #c7d7fe; font-size: 11px; padding: 4px 10px; border-radius: 999px; }
+    .conflict-history-card ul { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.6; color: var(--text-main); }
+    .contact-badge { position: fixed; bottom: 12px; right: 12px; background: #2b2b2b; color: #fff; font-family: "Microsoft YaHei", "微软雅黑", sans-serif; font-size: 11px; padding: 5px 10px; border-radius: 6px; z-index: 9998; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.2); border: 1px solid #333; }
+    .contact-badge:hover { background: #1f1f1f; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="langEn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" id="langZh" onclick="setLang('zh')">中文</button>
+  </div>
+  <h1 id="pageTitle">Decision Memory · User Research Agent</h1>
+  <p id="pageSubtitle">B2B pre-sales diagnosis → Research plan routing → Actionable assets + validation metrics (no scraping)</p>
+</header>
+
+<div id="toastContainer" class="toast-container" style="display:none;"></div>
+
+<main>
+  <div class="tabs">
+    <div class="tab active" id="tabA" onclick="switchTab('A')">A. B2B Diagnosis (Pre-sales)</div>
+    <div class="tab" id="tabB" onclick="switchTab('B')">B. User Research Delivery (Qual + Quant)</div>
+    <div class="tab" id="tabC" onclick="switchTab('C')">C. Decision Memory (Trace Graph)</div>
+  </div>
+
+  <div id="panelAB" class="grid">
+    <section class="card">
+      <h2 id="formTitle">Input (for Agent)</h2>
+
+      <div class="row">
+        <div>
+          <label id="lblIndustry">Target company business type</label>
+          <select id="industry"></select>
+        </div>
+        <div>
+          <label id="lblMarket">Target Market</label>
+          <input id="market" placeholder="e.g. North America / Europe / SEA / Domestic"/>
+        </div>
+      </div>
+
+      <label id="lblStage">Company Stage</label>
+      <select id="stage"></select>
+
+      <label id="lblGrowth">Growth Drivers (multi-select, ordered)</label>
+      <div id="growthOptions" class="growth-checkboxes"></div>
+      <div class="hint" id="hintGrowth">Select one or more (order by priority).</div>
+
+      <label id="lblPositioning">Business Positioning</label>
+      <select id="positioning"></select>
+
+      <label id="lblGoal">Goal</label>
+      <select id="goal"></select>
+
+      <label id="lblProblem">Core Problem (with facts/data)</label>
+      <textarea id="problem" placeholder="e.g. CAC up, CTR ok but add-to-cart low; users say 'can't tell difference' — high cart abandonment"></textarea>
+
+      <label id="lblConstraints">Constraints (optional)</label>
+      <textarea id="constraints" placeholder="e.g. results in 2 weeks; no minors; no raw audio storage; mid budget"></textarea>
+
+      <button class="btn" onclick="runA()" id="btnRunA">Run A: Diagnose → Research Plan</button>
+      <button class="btn secondary" onclick="runB()" id="runBBtn" disabled>Run B: Interview Guide + Survey Draft</button>
+
+      <div class="hint">
+        <span id="hintTemplates">Templates:</span>
+        <a href="../templates/B端客户售前诊断问卷_旗舰版.docx" download>Word</a> ·
+        <a href="../templates/研究策略路由表_旗舰版.xlsx" download>Excel</a>
+      </div>
+
+      <div class="small" style="margin-top:10px;">
+        <span id="apiBaseLabel">API Base:</span> <span id="apiBaseShow">https://api.userinsightagent.myrawzm0406.online</span>
+        · <a href="#" onclick="setApiBase(); return false;" id="linkSetApi">Set API address</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 id="outTitle">Output (Actionable Deliverables)</h2>
+      <div class="output" id="out">Waiting for input…</div>
+      <div style="margin-top:12px;">
+        <span class="pill" id="pill1">Evidence-first</span>
+        <span class="pill" id="pill2">Actionable + Verifiable</span>
+        <span class="pill" id="pill3">Read-only templates</span>
+      </div>
+    </section>
+  </div>
+
+  <div id="panelC" class="tab-c-only">
+    <div class="tab-c-grid">
+      <section class="card">
+        <h2 id="tabCOpTitle">Input / Actions</h2>
+        <label>topic (optional)</label>
+        <input id="traceTopic" placeholder="e.g. fintech"/>
+        <label>stage (optional)</label>
+        <input id="traceStage" placeholder="e.g. 1-10"/>
+        <button class="btn btn-sm" onclick="loadTraceGraph()" id="btnLoadGraph">Load Trace Graph</button>
+        <button class="btn btn-sm secondary" onclick="loadDecisionsSnapshots()" id="btnLoadDec">Load Decisions/Snapshots</button>
+        <button class="btn btn-sm secondary" onclick="openApiDocs()" id="btnApiDocs">Open API Docs</button>
+        <button class="btn btn-sm" style="border:1px solid var(--bad); color:var(--bad); background:#fff;" onclick="trigger400Demo()" id="btn400Demo">Trigger 400 Demo (Missing Citation)</button>
+        <div class="hint" style="margin-top:12px;" id="hintTraceGraph">
+          Trace Graph requires Decision Memory backend (uvicorn backend.api.main:app). API needs X-API-Key: admin123.
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 id="tabCGraphTitle">Trace Graph & Memory Proof</h2>
+        <div class="rules-card">
+          <h3 id="rulesTitle">Decision Enforcement Rules</h3>
+          <div class="rule-item">
+            <span class="rule-icon">⛔</span>
+            <div class="rule-text">
+              <div class="rule-en" id="rule1En">Rule #1 — No Citation, No Decision. Any decision without historical citation is explicitly rejected by the system (HTTP 400).</div>
+              <div class="rule-zh" id="rule1Zh">规则一 — 无援引，不决策。任何未援引历史证据或决策的判断，都会被系统直接拒绝（HTTP 400）。</div>
+            </div>
+          </div>
+          <div class="rule-item">
+            <span class="rule-icon">🔒</span>
+            <div class="rule-text">
+              <div class="rule-en" id="rule2En">Rule #2 — Falsified conclusions cannot be reverted. If a requirement contradicts a previously falsified decision, it will be blocked.</div>
+              <div class="rule-zh" id="rule2Zh">规则二 — 被证伪的结论不可回退。若新需求与已被证伪的历史决策冲突，系统将阻止该需求回退。</div>
+            </div>
+          </div>
+          <div class="rule-item">
+            <span class="rule-icon">📜</span>
+            <div class="rule-text">
+              <div class="rule-en" id="rule3En">Rule #3 — Memory constrains future decisions. Past evidence and falsification actively constrain future decision space.</div>
+              <div class="rule-zh" id="rule3Zh">规则三 — 记忆约束未来决策。历史证据与证伪结论会主动收缩未来可选决策空间。</div>
+            </div>
+          </div>
+          <div class="rules-footer" id="rulesFooter"></div>
+        </div>
+        <div id="graphError" class="err-msg" style="display:none;"></div>
+        <div id="graphWrapper" class="graph-container" style="display:none;"></div>
+        <div id="graphPlaceholder" class="output" style="min-height:200px;">
+          <span id="graphPlaceholderText">Click "Load Trace Graph" to fetch nodes/edges and render.</span>
+        </div>
+        <div class="conflict-history-card" id="conflictHistoryCard">
+          <h4><span id="conflictHistoryTitle">Conflict History</span> <span class="proof-badge" id="conflictHistoryBadge">Memory-constrained</span><button class="conflict-demo-btn" id="btnConflictDemo" onclick="runConflictDemo()" data-i18n="btnConflictDemo">Run Conflict Demo</button></h4>
+          <ul id="conflictHistoryList">
+            <li>Round 2 falsified speed hypothesis</li>
+            <li>Round 3 recall prevented rollback</li>
+          </ul>
+        </div>
+        <div id="nodeDetail" class="node-detail" style="display:none;"></div>
+        <div class="proof-block" style="margin-top:14px;">
+          <div class="line"><strong id="proofRecallLabel">RecallHits Found:</strong> <span id="proofRecall">—</span></div>
+          <div class="line"><strong id="proofConflictLabel">Conflict Reason:</strong> <span id="proofConflict">—</span></div>
+          <div class="line"><strong id="proofRationaleLabel">Final Decision Rationale:</strong> <span id="proofRationale">—</span></div>
+          <div class="hint-text" id="proofHint">If API cannot derive, copy from demo_outputs/demo.log.</div>
+        </div>
+        <div class="ui-event-log" id="uiEventLog">No events yet.</div>
+        <div class="comparison-module">
+          <h3 id="comparisonTitle" style="grid-column:1/-1; margin:0 0 8px; font-size:15px; color:var(--accent-main);">Why this decision requires memory</h3>
+          <div class="comparison-col">
+            <h4 id="comparisonWithTitle">With Memory Recall</h4>
+            <ul id="comparisonWithList"></ul>
+          </div>
+          <div class="comparison-col">
+            <h4 id="comparisonWithoutTitle">Without Memory Recall</h4>
+            <ul id="comparisonWithoutList"></ul>
+          </div>
+          <p id="comparisonNote" class="comparison-note" style="grid-column:1/-1; margin:8px 0 0;"></p>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="pill" id="footerPillA">A: Diagnosis</div>
+  <div class="pill" id="footerPillB">B: Research</div>
+  <div class="pill" id="footerPillC">C: Decision Memory</div>
+  <p style="margin-top:10px;" id="footerNote">
+    This demo shows how user research is agentified for conversion uplift. No external scraping.
+  </p>
+</footer>
+
+<div class="contact-badge" id="contactBadge">Contact: myrawzm0406@163.com | WeChat 15301052620</div>
+
+<script>
+  const I18N = {
+    en: {
+      pageTitle: "User Research Agent · Conversation OS",
+      pageSubtitle: "B2B pre-sales diagnosis → Research plan routing → Actionable assets + validation metrics (no scraping)",
+      tabA: "A. B2B Diagnosis (Pre-sales)",
+      tabB: "B. User Research Delivery (Qual + Quant)",
+      tabC: "C. Decision Memory (Trace Graph)",
+      formTitle: "Input (for Agent)",
+      formTitleB: "Input (reuse A)",
+      lblIndustry: "Target company business type",
+      lblMarket: "Target Market",
+      lblStage: "Company Stage",
+      lblGrowth: "Growth Drivers (multi-select, ordered)",
+      lblPositioning: "Business Positioning",
+      lblGoal: "Goal",
+      lblProblem: "Core Problem (with facts/data)",
+      lblConstraints: "Constraints (optional)",
+      hintGrowth: "Use full names, not abbreviations only.",
+      btnRunA: "Run A: Diagnose → Research Plan",
+      btnRunB: "Run B: Interview Guide + Survey Draft",
+      hintTemplates: "Templates:",
+      apiBaseLabel: "API Base:",
+      linkSetApi: "Set API address",
+      outTitle: "Output (Actionable Deliverables)",
+      outWaiting: "Waiting for input…",
+      pill1: "Evidence-first",
+      pill2: "Actionable + Verifiable",
+      pill3: "Read-only templates",
+      footerPillA: "A: Diagnosis",
+      footerPillB: "B: Research",
+      footerPillC: "C: Decision Memory",
+      tabCOpTitle: "Input / Actions",
+      btnLoadGraph: "Load Trace Graph",
+      btnLoadDec: "Load Decisions/Snapshots",
+      btnApiDocs: "Open API Docs",
+      hintTraceGraph: "Trace Graph requires Decision Memory backend (uvicorn backend.api.main:app). API needs X-API-Key: admin123.",
+      tabCGraphTitle: "Trace Graph & Memory Proof",
+      graphPlaceholderText: "Click \"Load Trace Graph\" to fetch nodes/edges and render.",
+      proofRecallLabel: "RecallHits Found:",
+      proofConflictLabel: "Conflict Reason:",
+      proofRationaleLabel: "Final Decision Rationale:",
+      proofHint: "If API cannot derive, copy from demo_outputs/demo.log.",
+      footerNote: "This demo shows how user research is agentified for conversion uplift. No external scraping.",
+      loading: "Loading…",
+      runAProgress: "Running…",
+      runBProgress: "Generating B deliverables…",
+      errBackend: "Error:\n{msg}\n\nEnsure backend is running (python backend/app.py) and API address is correct.",
+      errRunAFirst: "Please run A first.",
+      errLoadGraph: "Load failed: {msg}\n\nCheck: 1) Backend running (uvicorn backend.api.main:app --port 8000); 2) API_BASE correct; 3) /api/v1/trace_graph exists.",
+      proofCopyHint: "— (copy from demo.log)",
+      alertDecLoaded: "Decisions/Traces loaded (see console). No dedicated endpoint; use trace_graph.",
+      alertNoEndpoint: "Backend has no /api/v1/evidence/search or /api/v1/traces. Load Trace Graph first.",
+      alertLoadFail: "Load failed: {msg}",
+      comparisonTitle: "Why this decision requires memory",
+      comparisonWithTitle: "With Memory Recall",
+      comparisonWithItems: [
+        "The agent recalls a previously falsified decision (Round 2).",
+        "A contradiction is detected.",
+        "The system rejects reverting the requirement.",
+        "Decision consistency is preserved."
+      ],
+      comparisonWithoutTitle: "Without Memory Recall",
+      comparisonWithoutItems: [
+        "The agent only sees the latest interview.",
+        "No contradiction is detected.",
+        "The requirement would be reverted incorrectly.",
+        "The organization repeats a known failure."
+      ],
+      comparisonNote: "This is not logging, this is decision constraint. The failure is not a model capability issue—it is the absence of memory constraint.",
+      rulesTitle: "Decision Enforcement Rules",
+      rulesFooter: "This system enforces decisions, it does not suggest them.",
+      btn400Demo: "Trigger 400 Demo (Missing Citation)",
+      toastTitle400: "Decision Rejected (HTTP 400)",
+      toastBody400: "Rule #1 triggered — No Citation, No Decision.",
+      uiLogEmpty: "No events yet.",
+      uiLogRejected400: "Decision rejected due to missing citations.",
+      toastUnexpected: "Unexpected response",
+      toastNetwork: "Network error",
+      btnConflictDemo: "Run Conflict Demo",
+      btnConflictDemoRunning: "Running…",
+      demoLogTrigger: "Triggering 400 decision demo (No Citation, No Decision)...",
+      demoLogRefreshed: "Trace graph refreshed after demo.",
+      toastDemoCompleted: "Demo completed",
+      toastDemoCompletedBody: "Graph refreshed. Check Conflict History / Node Details.",
+      toastUnexpectedResponse: "Unexpected response",
+      logWarnExpected400: "Expected 400 but got HTTP {status}",
+      toastNetworkError: "Network error",
+      toastNetworkErrorBody: "Cannot reach backend. Check API_BASE.",
+      logErrorNetwork: "Network error during 400 demo",
+      toastRefreshFailed: "Refresh failed",
+      logErrorRefresh: "Trace graph refresh failed: {msg}",
+      demoLogClicked: "Run Conflict Demo clicked",
+      toastDemoRunning: "Running demo…",
+      logErrorMissing: "trigger400Demo handler missing",
+      toastMissingHandler: "Missing demo handler",
+      toastMissingHandlerBody: "trigger400Demo is not defined.",
+      conflictHistoryTitle: "Conflict History",
+      conflictHistoryBadge: "Memory-constrained",
+      conflictBullet1: "Round 2 falsified speed hypothesis",
+      conflictBullet2: "Round 3 recall prevented rollback",
+      industryOptions: [
+        { v: "tob_customization", en: "ToB Customization", zh: "ToB 客制化" },
+        { v: "tob_saas", en: "ToB SaaS", zh: "ToB SaaS" },
+        { v: "brand_fmcg", en: "Brand - FMCG", zh: "品牌方-快消" },
+        { v: "brand_electronics", en: "Brand - Consumer electronics", zh: "品牌方-消费电子" },
+        { v: "brand_durable", en: "Brand - Durable goods", zh: "品牌方-耐消" },
+        { v: "toc_app", en: "ToC App (single-sided product: tools/games)", zh: "ToC App 单边产品（如工具/游戏）" },
+        { v: "toc_platform", en: "ToC Platform (two-sided: e-commerce platform/social media)", zh: "ToC 双边平台（如电商撮合交易平台/内容平台/社交平台）" },
+        { v: "agency", en: "Agency (artist agency / MCN / micro-influencer incubation)", zh: "Agency（如 MCN 达人艺人经纪 / 网红孵化）" }
+      ],
+      stageOptions: [
+        { v: "0-1", en: "0-1 (Infrastructure/Demo, validate feasibility)", zh: "0-1（基建/做Demo，尽快验证可行性）" },
+        { v: "1-10", en: "1-10 (Early product, find PMF)", zh: "1-10（已出Demo/早期产品，快速找客户验证商业闭环）" },
+        { v: "10-100", en: "10-100 (Scale growth & efficiency)", zh: "10-100（已跑通交易/收入，需规模化增长与效率提升）" },
+        { v: "mature", en: "Mature (stable, pursue new growth)", zh: "成熟期（交易规模/利润稳定，追求更高效率或新增长点）" },
+        { v: "decline", en: "Decline (incubate new biz, second curve)", zh: "衰颓期（需孵化新业务，探索业务增长的第二曲线）" }
+      ],
+      positioningOptions: [
+        { v: "new_biz", en: "New incubation: direction unclear, explore users & scenarios", zh: "新孵化/新业务：方向未完全清晰，需要探索用户与场景" },
+        { v: "old_growth", en: "Old biz growth: new approach uncertain", zh: "旧业务新增长：服务于老业务增长，但新方式效果不确定" },
+        { v: "old_supply", en: "Mature supply, find new users & expression", zh: "旧供给找新用户：供给相对成熟，需要找到新目标人群与新表达" },
+        { v: "validated", en: "Proven value: supply-demand fit confirmed, room for efficiency gains; break down by scenario and go deep on problem areas", zh: "已论证价值：已确认供需匹配成立，效率有优化空间，需精细化拆场景定位问题深耕" },
+        { v: "new_market", en: "Existing users, new supply/market: discover unmet needs of existing users, expand supply chain or build/optimize new marketplace", zh: "旧用户新供给/新交易场：发现历史用户有别的需求待满足，为此拓展供应链/搭建优化新交易场" }
+      ],
+      goalOptions: [
+        { v: "first_order", en: "Increase first-order conversion", zh: "提升首单购买转化率" },
+        { v: "repurchase", en: "Increase repurchase conversion", zh: "提升复购转化率" },
+        { v: "refund", en: "Reduce refund/return rate", zh: "降低退款/退货率" },
+        { v: "lead_close", en: "Lead → close conversion", zh: "提升线索→成交转化率" },
+        { v: "leads_hva", en: "Filter/clean quality leads; increase High Value Action (HVA) count", zh: "筛选清洗有效线索 提升高价值行为(HVA)数" }
+      ],
+      growthOptions: [
+        { v: "mlg", en: "Marketing-Led Growth (MLG)", zh: "营销驱动增长(MLG)" },
+        { v: "olg", en: "Operations-Led Growth (OLG)", zh: "运营驱动增长(OLG)" },
+        { v: "plg", en: "Product-Led Growth (PLG)", zh: "产品驱动增长(PLG)" },
+        { v: "slg", en: "Sales-Led Growth (SLG)", zh: "销售驱动增长(SLG)" },
+        { v: "tlg", en: "Technology-Led Growth (TLG)", zh: "技术驱动增长(TLG)" }
+      ],
+      hintGrowth: "Select one or more (order by priority).",
+      marketPlaceholder: "e.g. North America / Europe / SEA / Domestic",
+      problemPlaceholder: "e.g. CAC up, CTR ok but add-to-cart low; users say 'can't tell difference' — high cart abandonment",
+      constraintsPlaceholder: "e.g. results in 2 weeks; no minors; no raw audio storage; mid budget",
+      traceTopicPlaceholder: "e.g. fintech",
+      traceStagePlaceholder: "e.g. 1-10",
+      contactBadge: "Contact: myrawzm0406@163.com | WeChat 15301052620"
+    },
+    zh: {
+      pageTitle: "用户研究 Agent · 对话 OS",
+      pageSubtitle: "B端售前诊断 → 研究方案路由 → 可执行资产 + 验证口径（不依赖爬虫）",
+      tabA: "A. B端客户诊断（售前/立项）",
+      tabB: "B. 用户研究交付（定性+定量）",
+      tabC: "C. Decision Memory 可视化（Trace Graph）",
+      formTitle: "输入（给Agent）",
+      formTitleB: "输入（沿用A段信息）",
+      lblIndustry: "目标公司业务类型",
+      lblMarket: "目标市场",
+      lblStage: "公司阶段",
+      lblGrowth: "增长驱动方式（可多选，按主次排序）",
+      lblPositioning: "业务定位",
+      lblGoal: "本次目标",
+      lblProblem: "核心问题（尽量包含事实/数据）",
+      lblConstraints: "约束（可选）",
+      hintGrowth: "不要只写缩写。请勾选一项或多项（按主次排序）。",
+      btnRunA: "运行 A：诊断 → 研究方案",
+      btnRunB: "运行 B：生成访谈大纲 + 问卷草案",
+      hintTemplates: "模板下载：",
+      apiBaseLabel: "后端默认地址：",
+      linkSetApi: "设置API地址",
+      outTitle: "输出（可执行交付物）",
+      outWaiting: "等待输入…",
+      pill1: "证据优先",
+      pill2: "可执行 + 可验证",
+      pill3: "只读模板",
+      footerPillA: "A: 诊断",
+      footerPillB: "B: 研究",
+      footerPillC: "C: Decision Memory",
+      tabCOpTitle: "输入 / 操作",
+      btnLoadGraph: "加载 Trace Graph",
+      btnLoadDec: "加载最新 Decisions/Snapshots",
+      btnApiDocs: "打开 API Docs",
+      hintTraceGraph: "Trace Graph 需 Decision Memory 后端（uvicorn backend.api.main:app）。API 需 X-API-Key: admin123。",
+      tabCGraphTitle: "Trace Graph 与 Memory Proof",
+      graphPlaceholderText: "点击「加载 Trace Graph」获取 nodes/edges 并渲染图谱。",
+      proofRecallLabel: "RecallHits Found:",
+      proofConflictLabel: "Conflict Reason:",
+      proofRationaleLabel: "Final Decision Rationale:",
+      proofHint: "若 API 无法推导，请从 demo_outputs/demo.log 复制上述三行填入展示。",
+      footerNote: "本Demo用于展示「用户研究如何被Agent化并服务转化提升闭环」，不依赖外部平台抓取数据。",
+      loading: "加载中…",
+      runAProgress: "运行中…",
+      runBProgress: "生成B段产物中…",
+      errBackend: "出错：\n{msg}\n\n请确认：后端已启动（python backend/app.py），且API地址正确。",
+      errRunAFirst: "请先运行A段。",
+      errLoadGraph: "加载失败：{msg}\n\n请检查：1) 后端是否启动（uvicorn backend.api.main:app --port 8000）；2) API_BASE 是否正确；3) /api/v1/trace_graph 是否存在。",
+      proofCopyHint: "—（需从 demo.log 复制）",
+      alertDecLoaded: "Decisions/Traces 已加载（见控制台）。当前无独立展示端点，可查看 trace_graph。",
+      alertNoEndpoint: "后端暂无对应端点。请先加载 Trace Graph。",
+      alertLoadFail: "加载失败：{msg}",
+      comparisonTitle: "为什么这个决策必须依赖记忆",
+      comparisonWithTitle: "有记忆回溯",
+      comparisonWithItems: [
+        "Agent 回溯到 Round 2 中已被证伪的决策。",
+        "系统检测到新访谈与历史结论的冲突。",
+        "系统拒绝需求回退。",
+        "决策演化保持一致性。"
+      ],
+      comparisonWithoutTitle: "如果没有记忆",
+      comparisonWithoutItems: [
+        "Agent 只能看到最新访谈。",
+        "无法识别与历史结论的冲突。",
+        "需求会被错误回退。",
+        "组织会重复已经失败过的决策。"
+      ],
+      comparisonNote: "这不是日志，这是决策约束。错误不是模型能力问题，而是缺失记忆约束。",
+      rulesTitle: "决策强制规则",
+      rulesFooter: "本系统强制执行决策，而非建议决策。",
+      btn400Demo: "触发 400 演示（缺少援引）",
+      toastTitle400: "决策被拒绝（HTTP 400）",
+      toastBody400: "触发规则一：无援引，不决策。",
+      uiLogEmpty: "暂无事件。",
+      uiLogRejected400: "决策因缺少援引被拒绝。",
+      toastUnexpected: "非预期响应",
+      toastNetwork: "网络错误",
+      btnConflictDemo: "运行冲突演示",
+      btnConflictDemoRunning: "运行中…",
+      demoLogTrigger: "触发 400 决策演示（无援引不决策）…",
+      demoLogRefreshed: "演示后 Trace Graph 已刷新。",
+      toastDemoCompleted: "演示完成",
+      toastDemoCompletedBody: "图谱已刷新。请查看 Conflict History / 节点详情。",
+      toastUnexpectedResponse: "非预期响应",
+      logWarnExpected400: "预期 400 但收到 HTTP {status}",
+      toastNetworkError: "网络错误",
+      toastNetworkErrorBody: "无法连接后端，请检查 API_BASE。",
+      logErrorNetwork: "400 演示期间网络错误",
+      toastRefreshFailed: "刷新失败",
+      logErrorRefresh: "Trace Graph 刷新失败：{msg}",
+      demoLogClicked: "运行冲突演示已点击",
+      toastDemoRunning: "正在运行演示…",
+      logErrorMissing: "trigger400Demo 处理器缺失",
+      toastMissingHandler: "演示处理器缺失",
+      toastMissingHandlerBody: "trigger400Demo 未定义。",
+      conflictHistoryTitle: "冲突历史",
+      conflictHistoryBadge: "Memory-constrained",
+      conflictBullet1: "Round 2 证伪速度假设",
+      conflictBullet2: "Round 3 回溯阻止回退",
+      industryOptions: [
+        { v: "tob_customization", en: "ToB Customization", zh: "ToB 客制化" },
+        { v: "tob_saas", en: "ToB SaaS", zh: "ToB SaaS" },
+        { v: "brand_fmcg", en: "Brand - FMCG", zh: "品牌方-快消" },
+        { v: "brand_electronics", en: "Brand - Consumer electronics", zh: "品牌方-消费电子" },
+        { v: "brand_durable", en: "Brand - Durable goods", zh: "品牌方-耐消" },
+        { v: "toc_single", en: "ToC Single-sided App (e.g., tools/games)", zh: "ToC 单边产品（如工具/游戏）" },
+        { v: "toc_platform", en: "ToC Two-sided Platform (e.g., e-commerce platform/social media)", zh: "ToC 双边平台（如电商撮合/内容平台/社交平台）" },
+        { v: "agency", en: "Agency (e.g., artist agency / MCN / micro-influencer incubation)", zh: "Agency（如MCN/达人艺人经纪/网红孵化）" }
+      ],
+      stageOptions: [
+        { v: "0-1", en: "0-1 (Infrastructure/Demo, validate feasibility)", zh: "0-1（基建/做Demo，尽快验证可行性）" },
+        { v: "1-10", en: "1-10 (Early product, find PMF)", zh: "1-10（已出Demo/早期产品，快速找客户验证商业闭环）" },
+        { v: "10-100", en: "10-100 (Scale growth & efficiency)", zh: "10-100（已跑通交易/收入，需规模化增长与效率提升）" },
+        { v: "mature", en: "Mature (stable, pursue new growth)", zh: "成熟期（交易规模/利润稳定，追求更高效率或新增长点）" },
+        { v: "decline", en: "Decline (incubate new biz, second curve)", zh: "衰颓期（需孵化新业务，探索业务增长的第二曲线）" }
+      ],
+      positioningOptions: [
+        { v: "new_biz", en: "New incubation: direction unclear, explore users & scenarios", zh: "新孵化/新业务：方向未完全清晰，需要探索用户与场景" },
+        { v: "old_growth", en: "Old biz growth: new approach uncertain", zh: "旧业务新增长：服务于老业务增长，但新方式效果不确定" },
+        { v: "old_supply", en: "Mature supply, find new users & expression", zh: "旧供给找新用户：供给相对成熟，需要找到新目标人群与新表达" },
+        { v: "validated", en: "Proven value: supply-demand fit confirmed, room for efficiency gains; break down by scenario and go deep on problem areas", zh: "已论证价值：已确认供需匹配成立，效率有优化空间，需精细化拆场景定位问题深耕" },
+        { v: "new_market", en: "Existing users, new supply/market: discover unmet needs of existing users, expand supply chain or build/optimize new marketplace", zh: "旧用户新供给/新交易场：发现历史用户有别的需求待满足，为此拓展供应链/搭建优化新交易场" }
+      ],
+      goalOptions: [
+        { v: "first_order", en: "Increase first-order conversion", zh: "提升首单购买转化率" },
+        { v: "repurchase", en: "Increase repurchase conversion", zh: "提升复购转化率" },
+        { v: "refund", en: "Reduce refund/return rate", zh: "降低退款/退货率" },
+        { v: "lead_close", en: "Lead → close conversion", zh: "提升线索→成交转化率" },
+        { v: "leads_hva", en: "Filter/clean quality leads; increase High Value Action (HVA) count", zh: "筛选清洗有效线索 提升高价值行为(HVA)数" }
+      ],
+      growthOptions: [
+        { v: "mlg", en: "Marketing-Led Growth (MLG)", zh: "营销驱动增长(MLG)" },
+        { v: "olg", en: "Operations-Led Growth (OLG)", zh: "运营驱动增长(OLG)" },
+        { v: "plg", en: "Product-Led Growth (PLG)", zh: "产品驱动增长(PLG)" },
+        { v: "slg", en: "Sales-Led Growth (SLG)", zh: "销售驱动增长(SLG)" },
+        { v: "tlg", en: "Technology-Led Growth (TLG)", zh: "技术驱动增长(TLG)" }
+      ],
+      hintGrowth: "不要只写缩写。请勾选一项或多项（按主次排序）。",
+      marketPlaceholder: "例如：北美 / 欧洲 / 东南亚 / 国内",
+      growthPlaceholder: "例如：营销驱动增长（Marketing-Led Growth, MLG）\n产品驱动增长（Product-Led Growth, PLG）",
+      problemPlaceholder: "例如：买量成本上升，点击不差但加购率低；用户经常说'看不懂差别/不敢买'，弃购率高。",
+      constraintsPlaceholder: "例如：两周内要出结果；不能触达未成年人；不能存储原始音频；预算中等。",
+      traceTopicPlaceholder: "例如：fintech",
+      traceStagePlaceholder: "例如：1-10",
+      contactBadge: "联系作者 myrawzm0406@163.com 微信 15301052620"
+    }
+  };
+
+  let LANG = localStorage.getItem("ui_lang") || "en";
+  let CURRENT_DIAGNOSE = null;
+  let TAB = 'A';
+  function getDefaultApiBase(){
+    try {
+      const stored = localStorage.getItem("API_BASE");
+      if (stored) return stored;
+      const o = (typeof window !== "undefined" && window.location && window.location.origin) ? window.location.origin : "";
+      if (!o || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(o)) return "http://127.0.0.1:8000";
+      return "https://api.userinsightagent.myrawzm0406.online";
+    } catch(e) { return "https://api.userinsightagent.myrawzm0406.online"; }
+  }
+  let API_BASE = getDefaultApiBase();
+  const API_KEY = "admin123";
+  let visNetworkInstance = null;
+  let lastTraceGraphData = null;
+
+  function t(key) {
+    const dict = I18N[LANG];
+    if (dict && dict[key] !== undefined) return dict[key];
+    return I18N.en[key] !== undefined ? I18N.en[key] : key;
+  }
+  function renderLang() { applyLang(); }
+
+  function setLang(lang) {
+    LANG = lang;
+    localStorage.setItem("ui_lang", lang);
+    document.getElementById("langEn").classList.toggle("active", lang === "en");
+    document.getElementById("langZh").classList.toggle("active", lang === "zh");
+    applyLang();
+  }
+
+  function applyLang() {
+    const t = I18N[LANG];
+    document.getElementById("pageTitle").textContent = t.pageTitle;
+    document.getElementById("pageSubtitle").textContent = t.pageSubtitle;
+    document.getElementById("tabA").textContent = t.tabA;
+    document.getElementById("tabB").textContent = t.tabB;
+    document.getElementById("tabC").textContent = t.tabC;
+    document.getElementById("formTitle").textContent = TAB === 'A' ? t.formTitle : (TAB === 'B' ? t.formTitleB : t.formTitle);
+    document.getElementById("lblIndustry").textContent = t.lblIndustry;
+    const industrySel = document.getElementById("industry");
+    const industryOpts = t.industryOptions || [];
+    industrySel.innerHTML = industryOpts.map(o => `<option value="${o.v}">${o[LANG] || o.en}</option>`).join("");
+    document.getElementById("lblMarket").textContent = t.lblMarket;
+    document.getElementById("market").placeholder = t.marketPlaceholder || "";
+    document.getElementById("lblStage").textContent = t.lblStage;
+    const stageSel = document.getElementById("stage");
+    const stageOpts = t.stageOptions || [];
+    stageSel.innerHTML = stageOpts.map(o => `<option value="${o.v}">${o[LANG] || o.en}</option>`).join("");
+    document.getElementById("lblGrowth").textContent = t.lblGrowth;
+    const growthContainer = document.getElementById("growthOptions");
+    const growthOpts = t.growthOptions || [];
+    const checkedGrowth = new Set(Array.from(growthContainer.querySelectorAll("input[type=checkbox]")).filter(cb => cb.checked).map(cb => cb.value));
+    growthContainer.innerHTML = growthOpts.map(o => `<label class="growth-option"><input type="checkbox" name="growth" value="${o.v}" id="growth_${o.v}">${o[LANG] || o.en}</label>`).join("");
+    growthOpts.forEach(o => { const cb = document.getElementById("growth_"+o.v); if (cb && checkedGrowth.has(o.v)) cb.checked = true; });
+    document.getElementById("lblPositioning").textContent = t.lblPositioning;
+    const posSel = document.getElementById("positioning");
+    const posOpts = t.positioningOptions || [];
+    posSel.innerHTML = posOpts.map(o => `<option value="${o.v}">${o[LANG] || o.en}</option>`).join("");
+    document.getElementById("lblGoal").textContent = t.lblGoal;
+    const goalSel = document.getElementById("goal");
+    const goalOpts = t.goalOptions || [];
+    goalSel.innerHTML = goalOpts.map(o => `<option value="${o.v}">${o[LANG] || o.en}</option>`).join("");
+    document.getElementById("lblProblem").textContent = t.lblProblem;
+    document.getElementById("problem").placeholder = t.problemPlaceholder || "";
+    document.getElementById("lblConstraints").textContent = t.lblConstraints;
+    document.getElementById("constraints").placeholder = t.constraintsPlaceholder || "";
+    document.getElementById("hintGrowth").textContent = t.hintGrowth;
+    document.getElementById("btnRunA").textContent = t.btnRunA;
+    document.getElementById("runBBtn").textContent = t.btnRunB;
+    document.getElementById("hintTemplates").textContent = t.hintTemplates;
+    document.getElementById("apiBaseLabel").textContent = t.apiBaseLabel;
+    document.getElementById("linkSetApi").textContent = t.linkSetApi;
+    document.getElementById("outTitle").textContent = t.outTitle;
+    const el = document.getElementById("pill1"); if (el) el.textContent = t.pill1;
+    const el2 = document.getElementById("pill2"); if (el2) el2.textContent = t.pill2;
+    const el3 = document.getElementById("pill3"); if (el3) el3.textContent = t.pill3;
+    const fpA = document.getElementById("footerPillA"); if (fpA) fpA.textContent = t.footerPillA;
+    const fpB = document.getElementById("footerPillB"); if (fpB) fpB.textContent = t.footerPillB;
+    const fpC = document.getElementById("footerPillC"); if (fpC) fpC.textContent = t.footerPillC;
+    const contactBadgeEl = document.getElementById("contactBadge"); if (contactBadgeEl) contactBadgeEl.textContent = t.contactBadge;
+    document.getElementById("tabCOpTitle").textContent = t.tabCOpTitle;
+    document.getElementById("btnLoadGraph").textContent = t.btnLoadGraph;
+    document.getElementById("btnLoadDec").textContent = t.btnLoadDec;
+    document.getElementById("btnApiDocs").textContent = t.btnApiDocs;
+    document.getElementById("hintTraceGraph").textContent = t.hintTraceGraph;
+    document.getElementById("traceTopic").placeholder = t.traceTopicPlaceholder || "";
+    document.getElementById("traceStage").placeholder = t.traceStagePlaceholder || "";
+    document.getElementById("tabCGraphTitle").textContent = t.tabCGraphTitle;
+    document.getElementById("graphPlaceholderText").textContent = t.graphPlaceholderText;
+    document.getElementById("proofRecallLabel").textContent = t.proofRecallLabel;
+    document.getElementById("proofConflictLabel").textContent = t.proofConflictLabel;
+    document.getElementById("proofRationaleLabel").textContent = t.proofRationaleLabel;
+    document.getElementById("proofHint").textContent = t.proofHint;
+    document.getElementById("footerNote").textContent = t.footerNote;
+    document.getElementById("comparisonTitle").textContent = t.comparisonTitle;
+    document.getElementById("comparisonWithTitle").textContent = t.comparisonWithTitle;
+    document.getElementById("comparisonWithoutTitle").textContent = t.comparisonWithoutTitle;
+    document.getElementById("comparisonNote").textContent = t.comparisonNote;
+    document.getElementById("rulesTitle").textContent = t.rulesTitle;
+    document.getElementById("rulesFooter").textContent = t.rulesFooter;
+    document.querySelectorAll(".rule-en").forEach(el => { el.classList.toggle("off", LANG !== "en"); });
+    document.querySelectorAll(".rule-zh").forEach(el => { el.classList.toggle("off", LANG !== "zh"); });
+    document.getElementById("btn400Demo").textContent = t.btn400Demo;
+    const btnConflictDemo = document.getElementById("btnConflictDemo");
+    if (btnConflictDemo && !btnConflictDemo.disabled) btnConflictDemo.textContent = t.btnConflictDemo;
+    document.getElementById("conflictHistoryTitle").textContent = t.conflictHistoryTitle;
+    document.getElementById("conflictHistoryBadge").textContent = t.conflictHistoryBadge;
+    if (lastTraceGraphData) renderConflictHistory(lastTraceGraphData, null);
+    if (document.getElementById("uiEventLog").textContent === "No events yet." || document.getElementById("uiEventLog").textContent === "暂无事件。") {
+      document.getElementById("uiEventLog").textContent = t.uiLogEmpty;
+    }
+    const withList = document.getElementById("comparisonWithList");
+    withList.innerHTML = (t.comparisonWithItems || []).map(s => `<li>${s}</li>`).join("");
+    const withoutList = document.getElementById("comparisonWithoutList");
+    withoutList.innerHTML = (t.comparisonWithoutItems || []).map(s => `<li>${s}</li>`).join("");
+    if (document.getElementById("out").textContent === "Waiting for input…" || document.getElementById("out").textContent === "等待输入…") {
+      document.getElementById("out").textContent = t.outWaiting;
+    }
+  }
+
+  document.getElementById("apiBaseShow").innerText = API_BASE;
+  setLang(LANG);
+
+  function switchTab(t){
+    TAB = t;
+    document.getElementById("tabA").classList.toggle("active", t==='A');
+    document.getElementById("tabB").classList.toggle("active", t==='B');
+    document.getElementById("tabC").classList.toggle("active", t==='C');
+    document.getElementById("panelAB").style.display = (t==='A' || t==='B') ? 'grid' : 'none';
+    document.getElementById("panelC").classList.toggle("visible", t==='C');
+    const t2 = I18N[LANG];
+    document.getElementById("formTitle").textContent = (t==='A') ? t2.formTitle : (t==='B') ? t2.formTitleB : t2.formTitle;
+  }
+
+  function setApiBase(){
+    const v = prompt(LANG === 'zh' ? "请输入后端API地址（例如 http://127.0.0.1:8000 ）" : "Enter API base (e.g. http://127.0.0.1:8000)", API_BASE);
+    if(!v) return;
+    API_BASE = v.replace(/\/+$/,'');
+    localStorage.setItem("API_BASE", API_BASE);
+    document.getElementById("apiBaseShow").innerText = API_BASE;
+  }
+
+  function readInput(){
+    const t = I18N[LANG];
+    const growthOpts = t.growthOptions || [];
+    const growthList = growthOpts.filter(o => document.getElementById("growth_"+o.v)?.checked).map(o => o[LANG] || o.en);
+    return {
+      industry: (()=>{ const s=document.getElementById('industry'); return s.value ? (s.options[s.selectedIndex]?.text || s.value) : (LANG === 'zh' ? "未填写" : "N/A"); })(),
+      market: document.getElementById('market').value || (LANG === 'zh' ? "未填写" : "N/A"),
+      company_stage: document.getElementById('stage').value,
+      growth_driver: growthList.length ? growthList : [LANG === 'zh' ? "营销驱动增长(MLG)" : "Marketing-Led Growth (MLG)"],
+      biz_positioning: document.getElementById('positioning').value,
+      core_problem: document.getElementById('problem').value,
+      constraints: document.getElementById('constraints').value,
+      target_goal: document.getElementById('goal').value
+    };
+  }
+
+  async function post(path, body){
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(body)
+    });
+    if(!res.ok){
+      const t = await res.text();
+      throw new Error(`HTTP ${res.status}: ${t}`);
+    }
+    return await res.json();
+  }
+
+  function pretty(obj){ return JSON.stringify(obj, null, 2); }
+
+  async function runA(){
+    const payload = readInput();
+    const out = document.getElementById('out');
+    const t = I18N[LANG];
+    out.innerText = t.runAProgress;
+    try{
+      const diag = await post("/api/diagnose", payload);
+      CURRENT_DIAGNOSE = diag;
+      const plan = await post("/api/research_plan", { diagnose: diag, timeline: "2-4周", budget_level: "中" });
+
+      let txt = "";
+      if (LANG === 'zh') {
+        txt += "【A段：售前诊断结果】\n";
+        txt += `- 公司阶段：${diag.stage}\n`;
+        txt += `- 增长驱动：${(diag.growth_driver||[]).join(" / ")}\n`;
+        txt += `- 业务定位：${diag.biz_positioning}\n`;
+        txt += `- 目标：${diag.goal}\n`;
+        txt += `- 问题类型：${(diag.problem_types||[]).join(" / ")}\n`;
+        txt += `- 紧急度：${diag.urgency}；可控性：${diag.controllability}\n\n`;
+        txt += "【推荐路线】\n";
+        (diag.recommended_route||[]).forEach(x=>{ txt += `- ${x}\n`; });
+        txt += "\n【研究方案（摘要）】\n";
+        txt += `- 定性样本建议：${plan.qualitative.recommended_n}\n`;
+        txt += `- 定量样本建议：${plan.quantitative.recommended_n}\n`;
+        txt += `- 交付物重点：\n`;
+        (plan.deliverables||[]).forEach(x=>{ txt += `  · ${x}\n`; });
+        txt += "\n【验证指标口径（示例）】\n";
+        (plan.validation_metrics||[]).forEach(m=>{
+          txt += `- ${m.metric}：${m.definition}${m.note?("（"+m.note+"）"):""}\n`;
+        });
+        txt += "\n【下一步】\n";
+        txt += "- 点「运行B」生成：售前提问清单、45分钟访谈大纲、定量问卷草案与数据质量规则。\n";
+      } else {
+        txt += "【A: Diagnosis Result】\n";
+        txt += `- Stage: ${diag.stage}\n`;
+        txt += `- Growth drivers: ${(diag.growth_driver||[]).join(" / ")}\n`;
+        txt += `- Positioning: ${diag.biz_positioning}\n`;
+        txt += `- Goal: ${diag.goal}\n`;
+        txt += `- Problem types: ${(diag.problem_types||[]).join(" / ")}\n`;
+        txt += `- Urgency: ${diag.urgency}; Controllability: ${diag.controllability}\n\n`;
+        txt += "【Recommended Route】\n";
+        (diag.recommended_route||[]).forEach(x=>{ txt += `- ${x}\n`; });
+        txt += "\n【Research Plan (Summary)】\n";
+        txt += `- Qual sample: ${plan.qualitative.recommended_n}\n`;
+        txt += `- Quant sample: ${plan.quantitative.recommended_n}\n`;
+        txt += `- Deliverables:\n`;
+        (plan.deliverables||[]).forEach(x=>{ txt += `  · ${x}\n`; });
+        txt += "\n【Validation Metrics】\n";
+        (plan.validation_metrics||[]).forEach(m=>{
+          txt += `- ${m.metric}: ${m.definition}${m.note?(" ("+m.note+")"):""}\n`;
+        });
+        txt += "\n【Next】\n";
+        txt += "- Click \"Run B\" for interview guide, survey draft, data quality rules.\n";
+      }
+
+      out.innerText = txt;
+      document.getElementById("runBBtn").disabled = false;
+      switchTab('A');
+    }catch(e){
+      out.innerText = t.errBackend.replace("{msg}", e.message);
+      document.getElementById("runBBtn").disabled = true;
+    }
+  }
+
+  async function runB(){
+    if(!CURRENT_DIAGNOSE){
+      alert(I18N[LANG].errRunAFirst);
+      return;
+    }
+    const payload = readInput();
+    const out = document.getElementById('out');
+    const t = I18N[LANG];
+    out.innerText = t.runBProgress;
+    try{
+      const b2b = await post("/api/b2b_questions", payload);
+      const qual = await post("/api/qual_guide", payload);
+      const quant = await post("/api/quant_survey", payload);
+
+      let txt = "";
+      if (LANG === 'zh') {
+        txt += "【B段：可直接交付的研究资产（草案）】\n\n";
+        txt += "1) 售前提问清单（给销售/售前）\n";
+        (b2b.questions||[]).forEach((q)=>{ txt += `- [${q.section}] ${q.q}\n`; });
+        txt += "\n2) 45分钟定性访谈大纲（半结构化）\n";
+        txt += `- 时长：${qual.qual_guide.duration_minutes}分钟\n`;
+        txt += "- 原则：\n";
+        (qual.qual_guide.principles||[]).forEach(p=> txt += `  · ${p}\n`);
+        txt += "\n- 结构：\n";
+        (qual.qual_guide.sections||[]).forEach(sec=>{
+          txt += `  · ${sec.t}\n`;
+          (sec.prompts||[]).forEach(p=> txt += `     - ${p}\n`);
+        });
+        txt += "\n3) 定量问卷草案（模块化）\n";
+        (quant.quant_survey.modules||[]).forEach(mod=>{
+          txt += `- 模块：${mod.name}\n`;
+          if(mod.note) txt += `  说明：${mod.note}\n`;
+          (mod.questions||[]).forEach(q=>{ txt += `  · ${q.id}（${q.type}）${q.q}\n`; });
+        });
+        txt += "\n4) 数据质量与清洗规则\n";
+        const dq = quant.quant_survey.data_quality || {};
+        txt += `- 速度异常规则：${dq.speeding_rule || "—"}\n`;
+        txt += `- 直线作答规则：${dq.straightlining_rule || "—"}\n`;
+        txt += `- 矛盾检测规则：${dq.contradiction_rule || "—"}\n`;
+        (dq.attention_checks||[]).forEach(x=> txt += `- 注意力题：${x}\n`);
+        txt += "\n5) 只读数据查询模板\n";
+      } else {
+        txt += "【B: Actionable Research Assets (Draft)】\n\n";
+        txt += "1) Pre-sales Question List\n";
+        (b2b.questions||[]).forEach((q)=>{ txt += `- [${q.section}] ${q.q}\n`; });
+        txt += "\n2) 45-min Qualitative Interview Guide\n";
+        txt += `- Duration: ${qual.qual_guide.duration_minutes} min\n`;
+        txt += "- Principles:\n";
+        (qual.qual_guide.principles||[]).forEach(p=> txt += `  · ${p}\n`);
+        txt += "\n- Structure:\n";
+        (qual.qual_guide.sections||[]).forEach(sec=>{
+          txt += `  · ${sec.t}\n`;
+          (sec.prompts||[]).forEach(p=> txt += `     - ${p}\n`);
+        });
+        txt += "\n3) Quantitative Survey Draft (Modular)\n";
+        (quant.quant_survey.modules||[]).forEach(mod=>{
+          txt += `- Module: ${mod.name}\n`;
+          if(mod.note) txt += `  Note: ${mod.note}\n`;
+          (mod.questions||[]).forEach(q=>{ txt += `  · ${q.id} (${q.type}) ${q.q}\n`; });
+        });
+        txt += "\n4) Data Quality & Cleaning Rules\n";
+        const dq = quant.quant_survey.data_quality || {};
+        txt += `- Speeding: ${dq.speeding_rule || "—"}\n`;
+        txt += `- Straightlining: ${dq.straightlining_rule || "—"}\n`;
+        txt += `- Contradiction: ${dq.contradiction_rule || "—"}\n`;
+        (dq.attention_checks||[]).forEach(x=> txt += `- Attention: ${x}\n`);
+        txt += "\n5) Read-only Query Templates\n";
+      }
+      const sql = await fetch(`${API_BASE}/api/sql_templates`).then(r=>r.json());
+      (sql.templates||[]).forEach(tm=>{ txt += `- ${tm.name}: ${tm.description}\n`; });
+
+      out.innerText = txt;
+      switchTab('B');
+    }catch(e){
+      out.innerText = "Error: " + e.message;
+    }
+  }
+
+  function getTraceGraphUrl(){
+    const topic = (document.getElementById('traceTopic').value || '').trim();
+    const stage = (document.getElementById('traceStage').value || '').trim();
+    let url = `${API_BASE}/api/v1/trace_graph`;
+    const params = [];
+    if(topic) params.push('topic='+encodeURIComponent(topic));
+    if(stage) params.push('stage='+encodeURIComponent(stage));
+    if(params.length) url += '?' + params.join('&');
+    return url;
+  }
+
+  async function loadTraceGraph(){
+    const errEl = document.getElementById('graphError');
+    const wrapper = document.getElementById('graphWrapper');
+    const placeholder = document.getElementById('graphPlaceholder');
+    const t = I18N[LANG];
+    errEl.style.display = 'none';
+    errEl.textContent = '';
+    placeholder.style.display = 'block';
+    wrapper.style.display = 'none';
+    document.getElementById("graphPlaceholderText").textContent = t.loading;
+
+    try {
+      const url = getTraceGraphUrl();
+      const res = await fetch(url, { headers: { "X-API-Key": API_KEY } });
+      if(!res.ok){
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+      }
+      const data = await res.json();
+      lastTraceGraphData = data;
+      renderGraph(data);
+      updateProofFromGraph(data);
+      renderConflictHistory(data, null);
+      placeholder.style.display = 'none';
+      wrapper.style.display = 'block';
+    } catch(e) {
+      placeholder.style.display = 'block';
+      document.getElementById("graphPlaceholderText").textContent = t.graphPlaceholderText;
+      errEl.style.display = 'block';
+      errEl.textContent = t.errLoadGraph.replace("{msg}", e.message);
+    }
+  }
+
+  function nodeColorByType(type){
+    const map = {
+      Evidence:   { background: '#eaf0ff', border: '#2f6bff' },
+      Decision:  { background: '#c7d7fe', border: '#1d4ed8' },
+      Requirement: { background: '#93c5fd', border: '#1e40af' },
+      Outcome:   { background: '#d1d5db', border: '#6b7280' }
+    };
+    return map[type] || { background: '#f3f4f6', border: '#9ca3af' };
+  }
+
+  function nodeShapeByType(type){
+    if(type === 'Evidence') return 'box';
+    if(type === 'Decision') return 'diamond';
+    if(type === 'Requirement') return 'ellipse';
+    if(type === 'Outcome') return 'triangle';
+    return 'ellipse';
+  }
+
+  function edgeLabelByType(type){
+    const map = { cites: 'cites', derived_from: 'derived_from', falsifies: 'falsifies', supports: 'supports', updates: 'updates' };
+    return map[type] || 'cites';
+  }
+
+  function renderGraph(data){
+    const wrapper = document.getElementById('graphWrapper');
+    wrapper.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.width = '100%';
+    container.style.height = '100%';
+    wrapper.appendChild(container);
+
+    const nodes = (data.nodes || []).map(n => {
+      const c = nodeColorByType(n.label || n.type);
+      const shape = nodeShapeByType(n.label || n.type);
+      const label = (n.summary || n.label || n.id || '').substring(0, 40) + ((n.summary||'').length > 40 ? '…' : '');
+      return {
+        id: n.id,
+        label: label,
+        shape: shape,
+        color: { background: c.background, border: c.border },
+        title: n.summary || n.label || n.id,
+        raw: n
+      };
+    });
+
+    const edges = (data.edges || []).map(e => ({
+      from: e.source,
+      to: e.target,
+      label: edgeLabelByType(e.type || 'cites'),
+      arrows: 'to'
+    }));
+
+    const visNodes = new vis.DataSet(nodes.map(n => ({ id: n.id, label: n.label, shape: n.shape, color: n.color, title: n.title })));
+    const visEdges = new vis.DataSet(edges);
+    const visData = { nodes: visNodes, edges: visEdges };
+    const options = {
+      nodes: { font: { size: 12 } },
+      edges: { font: { size: 10, align: 'middle' } },
+      physics: { enabled: true, barnesHut: { gravitationalConstant: -2000, springLength: 120 } }
+    };
+
+    const network = new vis.Network(container, visData, options);
+    visNetworkInstance = network;
+    const nodeMap = {};
+    nodes.forEach(n => { nodeMap[n.id] = n; });
+
+    network.on('click', function(params) {
+      if (params.nodes.length === 0) {
+        document.getElementById('nodeDetail').style.display = 'none';
+        return;
+      }
+      const id = params.nodes[0];
+      const node = nodeMap[id] || (data.nodes || []).find(n => n.id === id);
+      const raw = node && node.raw ? node.raw : (data.nodes || []).find(n => n.id === id) || { id };
+      renderNodeDetails(raw);
+    });
+  }
+
+  function renderNodeDetails(node){
+    const el = document.getElementById('nodeDetail');
+    el.style.display = 'block';
+    el.textContent = pretty(node);
+  }
+
+  function renderConflictHistory(graphJson, maybeNodeDetails){
+    const t = I18N[LANG];
+    const listEl = document.getElementById("conflictHistoryList");
+    const nodes = graphJson && graphJson.nodes ? graphJson.nodes : [];
+    const edges = graphJson && graphJson.edges ? graphJson.edges : [];
+    const DEFAULT_BULLET1 = t.conflictBullet1;
+    const DEFAULT_BULLET2 = t.conflictBullet2;
+    let bullet1 = DEFAULT_BULLET1;
+    let bullet2 = DEFAULT_BULLET2;
+
+    const summaryOf = (n) => {
+      const s = (n.summary || n.data?.rationale || n.data?.summary || n.label || n.type || "").toString();
+      return s.length > 60 ? s.substring(0, 60) + "…" : s;
+    };
+    const lower = (s) => (s || "").toString().toLowerCase();
+
+    for (const n of nodes) {
+      const s = summaryOf(n);
+      const sl = lower(s);
+      if (sl.includes("falsif") || sl.includes("falsified")) {
+        bullet1 = "Round 2 falsified " + (s || "hypothesis");
+        break;
+      }
+    }
+    if (bullet1 === DEFAULT_BULLET1) {
+      for (const e of edges) {
+        const tl = lower(e.type || e.label || "");
+        if (tl.includes("falsif")) {
+          const target = nodes.find(x => x.id === e.target);
+          bullet1 = "Round 2 falsified " + (target ? summaryOf(target) : "hypothesis");
+          break;
+        }
+      }
+    }
+    for (const n of nodes) {
+      const s = summaryOf(n);
+      const sl = lower(s);
+      if (sl.includes("conflict detected") || sl.includes("reject") || sl.includes("rollback")) {
+        bullet2 = "Round 3 recall prevented rollback";
+        break;
+      }
+    }
+    for (const e of edges) {
+      const tl = lower(e.type || e.label || "");
+      if (tl.includes("conflict") || tl.includes("reject") || tl.includes("rollback")) {
+        bullet2 = "Round 3 recall prevented rollback";
+        break;
+      }
+    }
+
+    listEl.innerHTML = "<li>" + bullet1 + "</li><li>" + bullet2 + "</li>";
+  }
+
+  function updateProofFromGraph(data){
+    const nodes = data.nodes || [];
+    const decisionCount = nodes.filter(n => (n.label || n.type) === 'Decision').length;
+    const t = I18N[LANG];
+    const copyHint = t.proofCopyHint;
+    document.getElementById('proofRecall').textContent = decisionCount > 0
+      ? `${decisionCount} cells (includes FALSIFIED:true)`
+      : copyHint;
+    document.getElementById('proofConflict').textContent = 'Detected contradiction with Round 2 Falsification (Decision ID: …) ' + (LANG === 'zh' ? '— 需从 demo.log 复制' : '— copy from demo.log');
+    document.getElementById('proofRationale').textContent = 'Conflict Detected: Rejected reverting to speed-focus; maintained quality-focus due to previous falsification. ' + (LANG === 'zh' ? '— 需从 demo.log 复制' : '— copy from demo.log');
+  }
+
+  async function loadDecisionsSnapshots(){
+    const t = I18N[LANG];
+    try {
+      const [decRes, snapRes] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/evidence/search`, { headers: { "X-API-Key": API_KEY } }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${API_BASE}/api/v1/traces`, { headers: { "X-API-Key": API_KEY } }).then(r => r.ok ? r.json() : null).catch(() => null)
+      ]);
+      if (decRes || snapRes) {
+        alert(t.alertDecLoaded);
+        if (decRes) console.log('Evidence search:', decRes);
+        if (snapRes) console.log('Traces:', snapRes);
+      } else {
+        alert(t.alertNoEndpoint);
+      }
+    } catch(e) {
+      alert(t.alertLoadFail.replace("{msg}", e.message));
+    }
+  }
+
+  function openApiDocs(){
+    window.open(`${API_BASE}/docs`, '_blank');
+  }
+
+  let toastTimer = null;
+  function showToast(title, body){
+    const c = document.getElementById("toastContainer");
+    c.innerHTML = '<div class="toast"><div class="toast-body"><div class="toast-title">' + (title || '').replace(/</g,'&lt;') + '</div><div class="toast-msg">' + (body || '').replace(/</g,'&lt;') + '</div></div><button class="toast-close" onclick="dismissToast()" aria-label="close">&times;</button></div>';
+    c.style.display = 'block';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(dismissToast, 3000);
+  }
+  function dismissToast(){
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+    document.getElementById("toastContainer").style.display = 'none';
+  }
+
+  function appendUiLog(type, message){
+    const el = document.getElementById("uiEventLog");
+    const t = I18N[LANG];
+    const prefix = (el.textContent === t.uiLogEmpty || el.textContent === "No events yet." || el.textContent === "暂无事件。") ? "" : el.textContent + "\n";
+    const ts = new Date().toISOString().replace('T',' ').slice(0,19);
+    el.textContent = prefix + `[${ts}] ${type}: ${message}`;
+  }
+
+  async function do400Request(){
+    const res = await fetch(`${API_BASE}/api/v1/decision`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+      body: JSON.stringify({ decision_type: "Feature_Pivot", rationale: "Demo test", citations: [], tradeoffs: "" })
+    });
+    const bodyText = await res.text();
+    return { ok: res.status === 400, status: res.status, bodyText };
+  }
+  async function trigger400Demo(){
+    const t = I18N[LANG];
+    try {
+      const r = await do400Request();
+      if (r.ok) {
+        showToast(t.toastTitle400, t.toastBody400);
+        appendUiLog("REJECTED_400", t.uiLogRejected400);
+      } else {
+        const msg = t.toastUnexpected + ": HTTP " + r.status;
+        showToast(msg, "");
+        appendUiLog("UNEXPECTED", msg);
+      }
+    } catch(e) {
+      showToast(t.toastNetwork, e.message || "");
+      appendUiLog("NETWORK_ERROR", (e.message || "Network error"));
+    }
+  }
+  async function runConflictDemo(){
+    const t = I18N[LANG];
+    const btn = document.getElementById("btnConflictDemo");
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = t.btnConflictDemoRunning;
+    appendUiLog("demo", t.demoLogClicked);
+    showToast(t.toastDemoRunning, "");
+    try {
+      if (typeof trigger400Demo !== "function") {
+        appendUiLog("error", t.logErrorMissing);
+        showToast(t.toastMissingHandler, t.toastMissingHandlerBody);
+        return;
+      }
+      appendUiLog("demo", t.demoLogTrigger);
+      const r = await do400Request();
+      if (!r.ok) {
+        showToast(t.toastUnexpectedResponse, "HTTP " + r.status);
+        appendUiLog("warn", t.logWarnExpected400.replace("{status}", String(r.status)));
+        return;
+      }
+      try {
+        await loadTraceGraph();
+        appendUiLog("demo", t.demoLogRefreshed);
+        showToast(t.toastDemoCompleted, t.toastDemoCompletedBody);
+      } catch(e) {
+        const msg = (e && e.message) || "Could not reload trace graph.";
+        showToast(t.toastRefreshFailed, msg);
+        appendUiLog("error", t.logErrorRefresh.replace("{msg}", msg));
+      }
+    } catch(e) {
+      showToast(t.toastNetworkError, t.toastNetworkErrorBody);
+      appendUiLog("error", t.logErrorNetwork);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  }
+
+  /* === Conflict Demo 实现说明 ===
+   * 新增 DOM：Conflict History 卡片 h4 内右侧按钮 #btnConflictDemo，class conflict-demo-btn
+   * 新增函数：do400Request() 返回 { ok, status, bodyText }；runConflictDemo() 编排流程
+   * 点击后：1) appendUiLog demo 文案  2) 调用 do400Request 触发 400  3) 若 400 则 loadTraceGraph 4) appendUiLog + showToast 完成
+   * 按钮 loading：disabled + 文案 Running…，finally 恢复
+   */
+</script>
+</body>
+</html>
