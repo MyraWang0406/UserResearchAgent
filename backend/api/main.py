@@ -7,10 +7,25 @@ from ..core.database import init_db, get_all_traces
 from ..core.evermem_client import memory_os
 from ..schemas.memory_cells import EvidenceCell, DecisionCell, RequirementCell
 
+def parse_origins(v: str) -> List[str]:
+    """Parse comma-separated CORS origins, strip whitespace, drop empty."""
+    if not v or not v.strip():
+        return []
+    return [o.strip() for o in v.split(",") if o.strip()]
+
+# Wildcard (*) is unsafe: agent demo uses X-API-Key auth; allow_credentials=True
+# with * causes browser to reject cookies/auth headers. Use explicit origins.
+DEFAULT_ORIGINS = [
+    "https://userinsightagent.myrawzm0406.online",
+    "http://47.101.155.238",
+    "http://47.101.155.238:80",
+]
+raw = os.getenv("CORS_ORIGINS", "")
+CORS_ORIGINS = parse_origins(raw) or DEFAULT_ORIGINS
+
 app = FastAPI(title="Decision Memory MVP", version="1.3.1")
 
 API_KEY = os.getenv("API_KEY", "admin123")
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
 
 app.add_middleware(
     CORSMiddleware,
