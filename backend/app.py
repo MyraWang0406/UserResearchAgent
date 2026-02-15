@@ -18,6 +18,7 @@ class DiagnoseIn(BaseModel):
     company_stage: str = Field(..., description="公司阶段")
     growth_driver: List[str] = Field(..., description="增长驱动方式（可多选）")
     biz_positioning: str = Field(..., description="本次服务业务在公司内部定位")
+    business_form: Optional[str] = Field(default=None, description="具体业务形态（可选）")
     core_problem: str = Field(..., description="核心问题描述（尽量包含事实/数据）")
     funnel_hint: Optional[Dict[str, Any]] = Field(default=None, description="可选：漏斗指标提示（任意结构）")
     constraints: Optional[str] = Field(default=None, description="约束：合规/预算/周期等")

@@ -67,6 +67,7 @@ Decision Memory is an organizational infrastructure where historical evidence an
 
 ## 前端入口与部署说明 / Frontend entry and deployment
 
+- **若出现「Failed to fetch」/ 定性定量报错：** 前端请求的是「后端 API 地址」。托管到阿里云 ECS 时：1) 在页面下方点击「设置API地址」；2) 填写你 ECS 上后端的完整地址（如 `https://你的域名:8000` 或 `http://公网IP:8000`）；3) 确认 ECS 上后端已启动（如 `uvicorn backend.app:app --host 0.0.0.0 --port 8000`）、安全组已放行 8000 端口、若用 HTTPS 需配置证书；4) 后端需允许前端域名的 CORS，否则浏览器会报错。
 - **唯一前端入口文件：** `frontend/index.html`（无构建步骤，纯静态）。
 - **本地预览：** 在项目根目录执行 `start.bat`（Windows）或手动运行：
   - 后端：`uvicorn backend.app:app --reload --host 127.0.0.1 --port 8000`

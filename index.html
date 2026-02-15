@@ -226,6 +226,9 @@
       <label id="lblGoal">Goal</label>
       <select id="goal"></select>
 
+      <label id="lblBusinessForm">Specific business form</label>
+      <textarea id="businessForm" placeholder="Business form: Through (by what means) for (which users) in (industry/scenario) to solve (what problem). Characteristics are … Historical difficulties … X's comparative advantage (e.g. supply chain / tech / brand / loyal users)."></textarea>
+
       <label id="lblProblem">Core Problem (with facts/data)</label>
       <textarea id="problem" placeholder="e.g. CAC up, CTR ok but add-to-cart low; users say 'can't tell difference' — high cart abandonment"></textarea>
 
@@ -245,6 +248,7 @@
         <span id="apiBaseLabel">API Base:</span> <span id="apiBaseShow">https://api.userinsightagent.myrawzm0406.online</span>
         · <a href="#" onclick="setApiBase(); return false;" id="linkSetApi">Set API address</a>
       </div>
+      <div class="hint" id="apiBaseHint" style="margin-top:4px;"></div>
     </section>
 
     <section class="card">
@@ -262,6 +266,8 @@
     <div class="tab-c-grid">
       <section class="card">
         <h2 id="tabCOpTitle">Input / Actions</h2>
+        <label id="lblTraceRunIndex">Run #</label>
+        <select id="traceRunIndex" onchange="onTraceRunIndexChange()"><option value="">—</option></select>
         <label>topic (optional)</label>
         <input id="traceTopic" placeholder="e.g. fintech"/>
         <label>stage (optional)</label>
@@ -366,7 +372,8 @@
       lblGrowth: "Growth Drivers (multi-select, ordered)",
       lblPositioning: "Business Positioning",
       lblGoal: "Goal",
-      lblProblem: "Core Problem (with facts/data)",
+      lblBusinessForm: "Specific business form",
+      lblProblem: "Key problems your business may face recently (include facts/data where possible)",
       lblConstraints: "Constraints (optional)",
       hintGrowth: "Use full names, not abbreviations only.",
       btnRunA: "Run A: Diagnose → Research Plan",
@@ -374,6 +381,7 @@
       hintTemplates: "Templates:",
       apiBaseLabel: "API Base:",
       linkSetApi: "Set API address",
+      apiBaseHint: "If you see \"Failed to fetch\", click \"Set API address\" and enter your backend URL (e.g. https://your-ECS-domain:8000). Ensure backend is running, port allowed, and CORS configured.",
       outTitle: "Output (Actionable Deliverables)",
       outWaiting: "Waiting for input…",
       pill1: "Evidence-first",
@@ -383,6 +391,7 @@
       footerPillB: "B: Research",
       footerPillC: "C: Decision Memory",
       tabCOpTitle: "Input / Actions",
+      lblTraceRunIndex: "Run #",
       btnLoadGraph: "Load Trace Graph",
       btnLoadDec: "Load Decisions/Snapshots",
       btnApiDocs: "Open API Docs",
@@ -480,7 +489,8 @@
         { v: "repurchase", en: "Increase repurchase conversion", zh: "提升复购转化率" },
         { v: "refund", en: "Reduce refund/return rate", zh: "降低退款/退货率" },
         { v: "lead_close", en: "Lead → close conversion", zh: "提升线索→成交转化率" },
-        { v: "leads_hva", en: "Filter/clean quality leads; increase High Value Action (HVA) count", zh: "筛选清洗有效线索 提升高价值行为(HVA)数" }
+        { v: "leads_hva", en: "Increase total High Value Action (HVA) count", zh: "提升高价值行为(HVA)总数" },
+        { v: "more_inquiries", en: "Quickly get more potential lead inquiries", zh: "快速获取更多潜在意向用户询单" }
       ],
       growthOptions: [
         { v: "mlg", en: "Marketing-Led Growth (MLG)", zh: "营销驱动增长(MLG)" },
@@ -491,6 +501,7 @@
       ],
       hintGrowth: "Select one or more (order by priority).",
       marketPlaceholder: "e.g. North America / Europe / SEA / Domestic",
+      businessFormPlaceholder: "Business form: Through (by what means) for (which users) in (industry/scenario) to solve (what problem). Characteristics are … Historical difficulties … X's comparative advantage (e.g. supply chain / tech / brand / loyal users).",
       problemPlaceholder: "e.g. CAC up, CTR ok but add-to-cart low; users say 'can't tell difference' — high cart abandonment",
       constraintsPlaceholder: "e.g. results in 2 weeks; no minors; no raw audio storage; mid budget",
       traceTopicPlaceholder: "e.g. fintech",
@@ -511,7 +522,8 @@
       lblGrowth: "增长驱动方式（可多选，按主次排序）",
       lblPositioning: "业务定位",
       lblGoal: "本次目标",
-      lblProblem: "核心问题（尽量包含事实/数据）",
+      lblBusinessForm: "具体业务形态",
+      lblProblem: "最近业务发展可能面临的核心问题（尽量包含事实/数据）",
       lblConstraints: "约束（可选）",
       hintGrowth: "不要只写缩写。请勾选一项或多项（按主次排序）。",
       btnRunA: "运行 A：诊断 → 研究方案",
@@ -519,6 +531,7 @@
       hintTemplates: "模板下载：",
       apiBaseLabel: "后端默认地址：",
       linkSetApi: "设置API地址",
+      apiBaseHint: "若出现「Failed to fetch」，请点击「设置API地址」填写后端完整地址（如 https://你的ECS域名:8000）。并确认：后端已启动、安全组放行端口、CORS 已配置。",
       outTitle: "输出（可执行交付物）",
       outWaiting: "等待输入…",
       pill1: "证据优先",
@@ -528,6 +541,7 @@
       footerPillB: "B: 研究",
       footerPillC: "C: Decision Memory",
       tabCOpTitle: "输入 / 操作",
+      lblTraceRunIndex: "序号",
       btnLoadGraph: "加载 Trace Graph",
       btnLoadDec: "加载最新 Decisions/Snapshots",
       btnApiDocs: "打开 API Docs",
@@ -625,7 +639,8 @@
         { v: "repurchase", en: "Increase repurchase conversion", zh: "提升复购转化率" },
         { v: "refund", en: "Reduce refund/return rate", zh: "降低退款/退货率" },
         { v: "lead_close", en: "Lead → close conversion", zh: "提升线索→成交转化率" },
-        { v: "leads_hva", en: "Filter/clean quality leads; increase High Value Action (HVA) count", zh: "筛选清洗有效线索 提升高价值行为(HVA)数" }
+        { v: "leads_hva", en: "Increase total High Value Action (HVA) count", zh: "提升高价值行为(HVA)总数" },
+        { v: "more_inquiries", en: "Quickly get more potential lead inquiries", zh: "快速获取更多潜在意向用户询单" }
       ],
       growthOptions: [
         { v: "mlg", en: "Marketing-Led Growth (MLG)", zh: "营销驱动增长(MLG)" },
@@ -637,6 +652,7 @@
       hintGrowth: "不要只写缩写。请勾选一项或多项（按主次排序）。",
       marketPlaceholder: "例如：北美 / 欧洲 / 东南亚 / 国内",
       growthPlaceholder: "例如：营销驱动增长（Marketing-Led Growth, MLG）\n产品驱动增长（Product-Led Growth, PLG）",
+      businessFormPlaceholder: "具体业务形态为：通过（以……什么方式）为……（什么用户）在……（行业/场景）解决……（问题），这些（行业/场景/用户）特征是……历史难点在于……，X在这里的比较优势是……（供应链降生产成本/技术突破/品牌宣推效率高/既有忠实用户）",
       problemPlaceholder: "例如：买量成本上升，点击不差但加购率低；用户经常说'看不懂差别/不敢买'，弃购率高。",
       constraintsPlaceholder: "例如：两周内要出结果；不能触达未成年人；不能存储原始音频；预算中等。",
       traceTopicPlaceholder: "例如：fintech",
@@ -661,6 +677,8 @@
   const API_KEY = "admin123";
   let visNetworkInstance = null;
   let lastTraceGraphData = null;
+  let runIndex = 0;
+  let runHistory = [];
 
   function t(key) {
     const dict = I18N[LANG];
@@ -709,6 +727,8 @@
     const goalSel = document.getElementById("goal");
     const goalOpts = t.goalOptions || [];
     goalSel.innerHTML = goalOpts.map(o => `<option value="${o.v}">${o[LANG] || o.en}</option>`).join("");
+    document.getElementById("lblBusinessForm").textContent = t.lblBusinessForm || "";
+    document.getElementById("businessForm").placeholder = t.businessFormPlaceholder || "";
     document.getElementById("lblProblem").textContent = t.lblProblem;
     document.getElementById("problem").placeholder = t.problemPlaceholder || "";
     document.getElementById("lblConstraints").textContent = t.lblConstraints;
@@ -719,6 +739,7 @@
     document.getElementById("hintTemplates").textContent = t.hintTemplates;
     document.getElementById("apiBaseLabel").textContent = t.apiBaseLabel;
     document.getElementById("linkSetApi").textContent = t.linkSetApi;
+    const apiHintEl = document.getElementById("apiBaseHint"); if (apiHintEl) apiHintEl.textContent = t.apiBaseHint || "";
     document.getElementById("outTitle").textContent = t.outTitle;
     const el = document.getElementById("pill1"); if (el) el.textContent = t.pill1;
     const el2 = document.getElementById("pill2"); if (el2) el2.textContent = t.pill2;
@@ -728,6 +749,8 @@
     const fpC = document.getElementById("footerPillC"); if (fpC) fpC.textContent = t.footerPillC;
     const contactBadgeEl = document.getElementById("contactBadge"); if (contactBadgeEl) contactBadgeEl.textContent = t.contactBadge;
     document.getElementById("tabCOpTitle").textContent = t.tabCOpTitle;
+    const lblRun = document.getElementById("lblTraceRunIndex"); if (lblRun) lblRun.textContent = t.lblTraceRunIndex || "Run #";
+    updateTraceRunIndexSelect();
     document.getElementById("btnLoadGraph").textContent = t.btnLoadGraph;
     document.getElementById("btnLoadDec").textContent = t.btnLoadDec;
     document.getElementById("btnApiDocs").textContent = t.btnApiDocs;
@@ -799,6 +822,7 @@
       company_stage: document.getElementById('stage').value,
       growth_driver: growthList.length ? growthList : [LANG === 'zh' ? "营销驱动增长(MLG)" : "Marketing-Led Growth (MLG)"],
       biz_positioning: document.getElementById('positioning').value,
+      business_form: document.getElementById('businessForm').value || "",
       core_problem: document.getElementById('problem').value,
       constraints: document.getElementById('constraints').value,
       target_goal: document.getElementById('goal').value
@@ -830,8 +854,13 @@
       CURRENT_DIAGNOSE = diag;
       const plan = await post("/api/research_plan", { diagnose: diag, timeline: "2-4周", budget_level: "中" });
 
+      runIndex++;
+      const topicTag = "run_" + runIndex;
+      runHistory.push({ index: runIndex, type: "A", topic: topicTag, payload: payload });
+
       let txt = "";
       if (LANG === 'zh') {
+        txt += "【#" + runIndex + "】\n";
         txt += "【A段：售前诊断结果】\n";
         txt += `- 公司阶段：${diag.stage}\n`;
         txt += `- 增长驱动：${(diag.growth_driver||[]).join(" / ")}\n`;
@@ -853,6 +882,7 @@
         txt += "\n【下一步】\n";
         txt += "- 点「运行B」生成：售前提问清单、45分钟访谈大纲、定量问卷草案与数据质量规则。\n";
       } else {
+        txt += "【#" + runIndex + "】\n";
         txt += "【A: Diagnosis Result】\n";
         txt += `- Stage: ${diag.stage}\n`;
         txt += `- Growth drivers: ${(diag.growth_driver||[]).join(" / ")}\n`;
@@ -877,6 +907,7 @@
 
       out.innerText = txt;
       document.getElementById("runBBtn").disabled = false;
+      updateTraceRunIndexSelect();
       switchTab('A');
     }catch(e){
       out.innerText = t.errBackend.replace("{msg}", e.message);
@@ -898,8 +929,13 @@
       const qual = await post("/api/qual_guide", payload);
       const quant = await post("/api/quant_survey", payload);
 
+      runIndex++;
+      const topicTag = "run_" + runIndex;
+      runHistory.push({ index: runIndex, type: "B", topic: topicTag, payload: payload });
+
       let txt = "";
       if (LANG === 'zh') {
+        txt += "【#" + runIndex + "】\n";
         txt += "【B段：可直接交付的研究资产（草案）】\n\n";
         txt += "1) 售前提问清单（给销售/售前）\n";
         (b2b.questions||[]).forEach((q)=>{ txt += `- [${q.section}] ${q.q}\n`; });
@@ -926,6 +962,7 @@
         (dq.attention_checks||[]).forEach(x=> txt += `- 注意力题：${x}\n`);
         txt += "\n5) 只读数据查询模板\n";
       } else {
+        txt += "【#" + runIndex + "】\n";
         txt += "【B: Actionable Research Assets (Draft)】\n\n";
         txt += "1) Pre-sales Question List\n";
         (b2b.questions||[]).forEach((q)=>{ txt += `- [${q.section}] ${q.q}\n`; });
@@ -956,10 +993,25 @@
       (sql.templates||[]).forEach(tm=>{ txt += `- ${tm.name}: ${tm.description}\n`; });
 
       out.innerText = txt;
+      updateTraceRunIndexSelect();
       switchTab('B');
     }catch(e){
       out.innerText = "Error: " + e.message;
     }
+  }
+
+  function updateTraceRunIndexSelect(){
+    const sel = document.getElementById("traceRunIndex");
+    if (!sel) return;
+    const prevVal = sel.value;
+    sel.innerHTML = "<option value=\"\">—</option>" + runHistory.map(r => "<option value=\"" + r.topic + "\">#" + r.index + " (" + r.type + ")</option>").join("");
+    if (prevVal && runHistory.some(r => r.topic === prevVal)) sel.value = prevVal;
+  }
+
+  function onTraceRunIndexChange(){
+    const sel = document.getElementById("traceRunIndex");
+    const topicInput = document.getElementById("traceTopic");
+    if (sel && topicInput && sel.value) { topicInput.value = sel.value; }
   }
 
   function getTraceGraphUrl(){
