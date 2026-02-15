@@ -162,6 +162,13 @@
     .toast-close:hover { color: var(--text-main); }
     @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
     .ui-event-log { background: #fff; border: 1px dashed var(--silver-border); border-radius: 10px; padding: 12px; font-size: 12px; font-family: monospace; white-space: pre-wrap; max-height: 160px; overflow-y: auto; margin-top: 12px; color: var(--text-sub); }
+    .conflict-history-card { background: #fff; border: 1px solid var(--blue-main); border-radius: 14px; padding: 16px; margin-top: 14px; }
+    .conflict-history-card h4 { margin: 0 0 10px; font-size: 15px; color: var(--blue-main); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .conflict-demo-btn { padding: 6px 12px; font-size: 12px; border-radius: 10px; border: 1px solid var(--silver-border); background: var(--blue-soft); color: var(--blue-main); cursor: pointer; }
+    .conflict-demo-btn:hover:not(:disabled) { filter: brightness(0.98); background: #d4e0ff; }
+    .conflict-demo-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    .conflict-history-card .proof-badge { background: var(--blue-main); color: #c7d7fe; font-size: 11px; padding: 4px 10px; border-radius: 999px; }
+    .conflict-history-card ul { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.6; color: var(--text-main); }
   </style>
 </head>
 <body>
@@ -309,6 +316,13 @@
         <div id="graphPlaceholder" class="output" style="min-height:200px;">
           <span id="graphPlaceholderText">Click "Load Trace Graph" to fetch nodes/edges and render.</span>
         </div>
+        <div class="conflict-history-card" id="conflictHistoryCard">
+          <h4><span>Conflict History <span class="proof-badge">Memory-constrained</span></span><button class="conflict-demo-btn" id="btnConflictDemo" onclick="runConflictDemo()" data-i18n="btnConflictDemo">Run Conflict Demo</button></h4>
+          <ul id="conflictHistoryList">
+            <li>Round 2 falsified speed hypothesis</li>
+            <li>Round 3 recall prevented rollback</li>
+          </ul>
+        </div>
         <div id="nodeDetail" class="node-detail" style="display:none;"></div>
         <div class="proof-block" style="margin-top:14px;">
           <div class="line"><strong id="proofRecallLabel">RecallHits Found:</strong> <span id="proofRecall">—</span></div>
@@ -415,7 +429,20 @@
       uiLogEmpty: "No events yet.",
       uiLogRejected400: "Decision rejected due to missing citations.",
       toastUnexpected: "Unexpected response",
-      toastNetwork: "Network error"
+      toastNetwork: "Network error",
+      btnConflictDemo: "Run Conflict Demo",
+      btnConflictDemoRunning: "Running…",
+      demoLogTrigger: "Triggering 400 decision demo (No Citation, No Decision)...",
+      demoLogRefreshed: "Trace graph refreshed after demo.",
+      toastDemoCompleted: "Demo completed",
+      toastDemoCompletedBody: "Graph refreshed. Check Conflict History / Node Details.",
+      toastUnexpectedResponse: "Unexpected response",
+      logWarnExpected400: "Expected 400 but got HTTP {status}",
+      toastNetworkError: "Network error",
+      toastNetworkErrorBody: "Cannot reach backend. Check API_BASE.",
+      logErrorNetwork: "Network error during 400 demo",
+      toastRefreshFailed: "Refresh failed",
+      logErrorRefresh: "Trace graph refresh failed: {msg}"
     },
     zh: {
       pageTitle: "决策记忆 · 用户研究 Agent",
@@ -487,14 +514,37 @@
       uiLogEmpty: "暂无事件。",
       uiLogRejected400: "决策因缺少援引被拒绝。",
       toastUnexpected: "非预期响应",
-      toastNetwork: "网络错误"
+      toastNetwork: "网络错误",
+      btnConflictDemo: "运行冲突演示",
+      btnConflictDemoRunning: "运行中…",
+      demoLogTrigger: "触发 400 决策演示（无援引不决策）…",
+      demoLogRefreshed: "演示后 Trace Graph 已刷新。",
+      toastDemoCompleted: "演示完成",
+      toastDemoCompletedBody: "图谱已刷新。请查看 Conflict History / 节点详情。",
+      toastUnexpectedResponse: "非预期响应",
+      logWarnExpected400: "预期 400 但收到 HTTP {status}",
+      toastNetworkError: "网络错误",
+      toastNetworkErrorBody: "无法连接后端，请检查 API_BASE。",
+      logErrorNetwork: "400 演示期间网络错误",
+      toastRefreshFailed: "刷新失败",
+      logErrorRefresh: "Trace Graph 刷新失败：{msg}"
     }
   };
 
   let LANG = localStorage.getItem("LANG") || "en";
   let CURRENT_DIAGNOSE = null;
   let TAB = 'A';
-  let API_BASE = localStorage.getItem("API_BASE") || "http://127.0.0.1:8000";
+  function getDefaultApiBase(){
+    try {
+      const stored = localStorage.getItem("API_BASE");
+      if (stored) return stored;
+      const o = (typeof window !== "undefined" && window.location && window.location.origin) ? window.location.origin : "";
+      if (!o || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(o)) return "http://127.0.0.1:8000";
+      if (/userinsightagent\.myrawzm0406\.online/i.test(o)) return o;
+      return "https://userinsightagent.myrawzm0406.online";
+    } catch(e) { return "http://127.0.0.1:8000"; }
+  }
+  let API_BASE = getDefaultApiBase();
   const API_KEY = "admin123";
   let visNetworkInstance = null;
   let lastTraceGraphData = null;
@@ -549,6 +599,8 @@
     document.getElementById("rulesTitle").textContent = t.rulesTitle;
     document.getElementById("rulesFooter").textContent = t.rulesFooter;
     document.getElementById("btn400Demo").textContent = t.btn400Demo;
+    const btnConflictDemo = document.getElementById("btnConflictDemo");
+    if (btnConflictDemo && !btnConflictDemo.disabled) btnConflictDemo.textContent = t.btnConflictDemo;
     if (document.getElementById("uiEventLog").textContent === "No events yet." || document.getElementById("uiEventLog").textContent === "暂无事件。") {
       document.getElementById("uiEventLog").textContent = t.uiLogEmpty;
     }
@@ -788,6 +840,7 @@
       lastTraceGraphData = data;
       renderGraph(data);
       updateProofFromGraph(data);
+      renderConflictHistory(data, null);
       placeholder.style.display = 'none';
       wrapper.style.display = 'block';
     } catch(e) {
@@ -882,6 +935,58 @@
     el.textContent = pretty(node);
   }
 
+  function renderConflictHistory(graphJson, maybeNodeDetails){
+    const listEl = document.getElementById("conflictHistoryList");
+    const nodes = graphJson && graphJson.nodes ? graphJson.nodes : [];
+    const edges = graphJson && graphJson.edges ? graphJson.edges : [];
+    const DEFAULT_BULLET1 = "Round 2 falsified speed hypothesis";
+    const DEFAULT_BULLET2 = "Round 3 recall prevented rollback";
+    let bullet1 = DEFAULT_BULLET1;
+    let bullet2 = DEFAULT_BULLET2;
+
+    const summaryOf = (n) => {
+      const s = (n.summary || n.data?.rationale || n.data?.summary || n.label || n.type || "").toString();
+      return s.length > 60 ? s.substring(0, 60) + "…" : s;
+    };
+    const lower = (s) => (s || "").toString().toLowerCase();
+
+    for (const n of nodes) {
+      const s = summaryOf(n);
+      const sl = lower(s);
+      if (sl.includes("falsif") || sl.includes("falsified")) {
+        bullet1 = "Round 2 falsified " + (s || "hypothesis");
+        break;
+      }
+    }
+    if (bullet1 === DEFAULT_BULLET1) {
+      for (const e of edges) {
+        const tl = lower(e.type || e.label || "");
+        if (tl.includes("falsif")) {
+          const target = nodes.find(x => x.id === e.target);
+          bullet1 = "Round 2 falsified " + (target ? summaryOf(target) : "hypothesis");
+          break;
+        }
+      }
+    }
+    for (const n of nodes) {
+      const s = summaryOf(n);
+      const sl = lower(s);
+      if (sl.includes("conflict detected") || sl.includes("reject") || sl.includes("rollback")) {
+        bullet2 = "Round 3 recall prevented rollback";
+        break;
+      }
+    }
+    for (const e of edges) {
+      const tl = lower(e.type || e.label || "");
+      if (tl.includes("conflict") || tl.includes("reject") || tl.includes("rollback")) {
+        bullet2 = "Round 3 recall prevented rollback";
+        break;
+      }
+    }
+
+    listEl.innerHTML = "<li>" + bullet1 + "</li><li>" + bullet2 + "</li>";
+  }
+
   function updateProofFromGraph(data){
     const nodes = data.nodes || [];
     const decisionCount = nodes.filter(n => (n.label || n.type) === 'Decision').length;
@@ -938,19 +1043,24 @@
     el.textContent = prefix + `[${ts}] ${type}: ${message}`;
   }
 
+  async function do400Request(){
+    const res = await fetch(`${API_BASE}/api/v1/decision`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+      body: JSON.stringify({ decision_type: "Feature_Pivot", rationale: "Demo test", citations: [], tradeoffs: "" })
+    });
+    const bodyText = await res.text();
+    return { ok: res.status === 400, status: res.status, bodyText };
+  }
   async function trigger400Demo(){
     const t = I18N[LANG];
     try {
-      const res = await fetch(`${API_BASE}/api/v1/decision`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
-        body: JSON.stringify({ decision_type: "Feature_Pivot", rationale: "Demo test", citations: [], tradeoffs: "" })
-      });
-      if (res.status === 400) {
+      const r = await do400Request();
+      if (r.ok) {
         showToast(t.toastTitle400, t.toastBody400);
         appendUiLog("REJECTED_400", t.uiLogRejected400);
       } else {
-        const msg = t.toastUnexpected + ": HTTP " + res.status;
+        const msg = t.toastUnexpected + ": HTTP " + r.status;
         showToast(msg, "");
         appendUiLog("UNEXPECTED", msg);
       }
@@ -959,6 +1069,44 @@
       appendUiLog("NETWORK_ERROR", (e.message || "Network error"));
     }
   }
+  async function runConflictDemo(){
+    const t = I18N[LANG];
+    const btn = document.getElementById("btnConflictDemo");
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = t.btnConflictDemoRunning;
+    try {
+      appendUiLog("demo", t.demoLogTrigger);
+      const r = await do400Request();
+      if (!r.ok) {
+        showToast(t.toastUnexpectedResponse, "HTTP " + r.status);
+        appendUiLog("warn", t.logWarnExpected400.replace("{status}", String(r.status)));
+        return;
+      }
+      try {
+        await loadTraceGraph();
+        appendUiLog("demo", t.demoLogRefreshed);
+        showToast(t.toastDemoCompleted, t.toastDemoCompletedBody);
+      } catch(e) {
+        const msg = (e && e.message) || "Could not reload trace graph.";
+        showToast(t.toastRefreshFailed, msg);
+        appendUiLog("error", t.logErrorRefresh.replace("{msg}", msg));
+      }
+    } catch(e) {
+      showToast(t.toastNetworkError, t.toastNetworkErrorBody);
+      appendUiLog("error", t.logErrorNetwork);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  }
+
+  /* === Conflict Demo 实现说明 ===
+   * 新增 DOM：Conflict History 卡片 h4 内右侧按钮 #btnConflictDemo，class conflict-demo-btn
+   * 新增函数：do400Request() 返回 { ok, status, bodyText }；runConflictDemo() 编排流程
+   * 点击后：1) appendUiLog demo 文案  2) 调用 do400Request 触发 400  3) 若 400 则 loadTraceGraph 4) appendUiLog + showToast 完成
+   * 按钮 loading：disabled + 文案 Running…，finally 恢复
+   */
 </script>
 </body>
 </html>
