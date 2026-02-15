@@ -4,6 +4,10 @@ Decision Memory is an organizational infrastructure where historical evidence an
 
 **Memory Genesis Track 1 参赛项目** · 强制「无援引不决策」，实现决策可追溯、需求演化一致性、组织记忆沉淀。
 
+> This is not a static UI demo.  
+> The system enforces decision consistency through memory recall, citation, and falsification.  
+> Decisions without historical citation are explicitly rejected (400).
+
 ## Proof: Memory Influences Decisions
 
 本区块目的：**证明 recall 实际影响了新决策，而非仅存储**。以下三条硬证据来自 `demo_outputs/demo.log`，可交叉验证。
@@ -40,6 +44,8 @@ Decision Memory is an organizational infrastructure where historical evidence an
 | **Round 3** | Conflict Recall | 新访谈再次提「速度」→ Recall 历史决策 → 检测到与 Round 2 证伪冲突 → 拒绝回退，维持质量优先 |
 
 **核心**：第 3 轮 Recall 到第 2 轮证伪决策，影响最终 rationale，体现「组织记忆」约束新决策。
+
+**Live Demo:** https://userinsightagent.myrawzm0406.online/
 
 ## How to judge it's memory-driven (not storage)
 
