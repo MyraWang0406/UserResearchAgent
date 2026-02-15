@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>User Research Agent · Conversion OS</title>
+  <title>Decision Memory · User Research Agent</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <style>
@@ -27,9 +27,19 @@
         #ffffff;
       color: var(--text-main);
     }
-    header { padding: 28px 40px 18px; border-bottom: 1px solid var(--silver-border); }
+    header { padding: 28px 40px 18px; border-bottom: 1px solid var(--silver-border); position: relative; }
     header h1 { margin: 0; font-size: 26px; color: var(--blue-main); }
     header p { margin-top: 6px; color: var(--text-sub); font-size: 14px; }
+    .lang-toggle {
+      position: absolute; top: 28px; right: 40px;
+      display: flex; gap: 4px; font-size: 13px;
+    }
+    .lang-btn {
+      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--silver-border);
+      background: #fff; color: var(--text-sub); cursor: pointer;
+    }
+    .lang-btn.active { border-color: var(--blue-main); color: var(--blue-main); background: var(--blue-soft); }
+    .lang-btn:hover { border-color: var(--blue-main); }
     main { padding: 24px 40px 60px; }
     .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; }
     .card {
@@ -92,7 +102,6 @@
     a { color: var(--blue-main); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* Tab C */
     .tab-c-only { display: none; }
     .tab-c-only.visible { display: block; }
     .tab-c-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
@@ -115,6 +124,21 @@
     }
     .proof-block .line { margin-bottom: 8px; }
     .proof-block .hint-text { color: var(--text-sub); font-size: 12px; margin-top: 10px; }
+    .comparison-module { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .comparison-col { background: #fff; border: 1px solid var(--silver-border); border-radius: 10px; padding: 14px; font-size: 13px; line-height: 1.55; }
+    .comparison-col h4 { margin: 0 0 10px; font-size: 14px; color: var(--blue-main); }
+    .comparison-col ul { margin: 0; padding-left: 18px; }
+    .comparison-col li { margin-bottom: 6px; }
+    .comparison-note { margin-top: 10px; font-size: 12px; color: var(--text-sub); font-style: italic; }
+    .rules-card { background: #fff; border: 1px solid var(--blue-main); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .rules-card h3 { margin: 0 0 12px; font-size: 15px; color: var(--blue-main); }
+    .rule-item { display: flex; gap: 10px; margin-bottom: 14px; font-size: 13px; line-height: 1.5; }
+    .rule-item:last-child { margin-bottom: 0; }
+    .rule-icon { flex-shrink: 0; font-size: 16px; }
+    .rule-text { flex: 1; }
+    .rule-en { margin-bottom: 4px; font-weight: 500; color: var(--text-main); }
+    .rule-zh { font-size: 12px; color: var(--text-sub); }
+    .rules-footer { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--silver-border); font-size: 12px; color: var(--text-sub); font-style: italic; }
     .node-detail {
       background: #fff;
       border: 1px dashed var(--silver-border);
@@ -133,47 +157,50 @@
 </head>
 <body>
 <header>
-  <h1>User Research Agent · Conversion OS</h1>
-  <p>先做B端售前诊断 → 自动路由研究方案 → 输出可直接提升首单/复购转化的"资产+验证口径"（不依赖爬虫）</p>
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="langEn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" id="langZh" onclick="setLang('zh')">中文</button>
+  </div>
+  <h1 id="pageTitle">Decision Memory · User Research Agent</h1>
+  <p id="pageSubtitle">B2B pre-sales diagnosis → Research plan routing → Actionable assets + validation metrics (no scraping)</p>
 </header>
 
 <main>
   <div class="tabs">
-    <div class="tab active" id="tabA" onclick="switchTab('A')">A. B端客户诊断（售前/立项）</div>
-    <div class="tab" id="tabB" onclick="switchTab('B')">B. 用户研究交付（定性+定量）</div>
-    <div class="tab" id="tabC" onclick="switchTab('C')">C. Decision Memory 可视化（Trace Graph）</div>
+    <div class="tab active" id="tabA" onclick="switchTab('A')">A. B2B Diagnosis (Pre-sales)</div>
+    <div class="tab" id="tabB" onclick="switchTab('B')">B. User Research Delivery (Qual + Quant)</div>
+    <div class="tab" id="tabC" onclick="switchTab('C')">C. Decision Memory (Trace Graph)</div>
   </div>
 
-  <!-- Tab A / B -->
   <div id="panelAB" class="grid">
     <section class="card">
-      <h2 id="formTitle">输入（给Agent）</h2>
+      <h2 id="formTitle">Input (for Agent)</h2>
 
       <div class="row">
         <div>
-          <label>行业</label>
+          <label id="lblIndustry">Industry</label>
           <input id="industry" placeholder="例如：美妆护肤 / 营养保健品 / 耐消 / 软件SaaS"/>
         </div>
         <div>
-          <label>目标市场</label>
+          <label id="lblMarket">Target Market</label>
           <input id="market" placeholder="例如：北美 / 欧洲 / 东南亚 / 国内"/>
         </div>
       </div>
 
-      <label>公司阶段</label>
+      <label id="lblStage">Company Stage</label>
       <select id="stage">
-        <option>0-1（基建/做Demo，尽快验证可行性）</option>
-        <option>1-10（已出Demo/早期产品，快速找客户验证商业闭环）</option>
-        <option>10-100（已跑通交易/收入，需规模化增长与效率提升）</option>
-        <option>成熟期（交易规模/利润稳定，追求更高效率或新增长点）</option>
-        <option>探索创新（成熟业务之外的新业务孵化/战略布局）</option>
+        <option value="0-1（基建/做Demo，尽快验证可行性）">0-1（基建/做Demo，尽快验证可行性）</option>
+        <option value="1-10（已出Demo/早期产品，快速找客户验证商业闭环）">1-10（已出Demo/早期产品，快速找客户验证商业闭环）</option>
+        <option value="10-100（已跑通交易/收入，需规模化增长与效率提升）">10-100（已跑通交易/收入，需规模化增长与效率提升）</option>
+        <option value="成熟期（交易规模/利润稳定，追求更高效率或新增长点）">成熟期（交易规模/利润稳定，追求更高效率或新增长点）</option>
+        <option value="探索创新（成熟业务之外的新业务孵化/战略布局）">探索创新（成熟业务之外的新业务孵化/战略布局）</option>
       </select>
 
-      <label>增长驱动方式（可多选，按主次排序）</label>
-      <textarea id="growth" placeholder="例如：营销驱动增长（Marketing-Led Growth, MLG）\n产品驱动增长（Product-Led Growth, PLG）"></textarea>
-      <div class="hint">提示：不要只写缩写。请用中文意思（括号里写英文全称）。</div>
+      <label id="lblGrowth">Growth Drivers (multi-select, ordered)</label>
+      <textarea id="growth" placeholder="例如：营销驱动增长（Marketing-Led Growth, MLG）&#10;产品驱动增长（Product-Led Growth, PLG）"></textarea>
+      <div class="hint" id="hintGrowth">Use full names, not abbreviations only.</div>
 
-      <label>本次服务的业务定位（在公司内部属于什么）</label>
+      <label id="lblPositioning">Business Positioning</label>
       <select id="positioning">
         <option>新孵化/新业务：方向未完全清晰，需要探索用户与场景</option>
         <option>旧业务新增长：服务于老业务增长，但新方式效果不确定</option>
@@ -182,7 +209,7 @@
         <option>新供给/新交易场：为一类用户新需求构建新的交易场/新产品线</option>
       </select>
 
-      <label>本次目标</label>
+      <label id="lblGoal">Goal</label>
       <select id="goal">
         <option>提升首单购买转化率</option>
         <option>提升复购转化率</option>
@@ -190,69 +217,104 @@
         <option>提升线索→成交转化率</option>
       </select>
 
-      <label>核心问题（尽量包含事实/数据/典型案例）</label>
-      <textarea id="problem" placeholder="例如：买量成本上升，点击不差但加购率低；用户经常说‘看不懂差别/不敢买’，弃购率高。"></textarea>
+      <label id="lblProblem">Core Problem (with facts/data)</label>
+      <textarea id="problem" placeholder="例如：买量成本上升，点击不差但加购率低；用户经常说'看不懂差别/不敢买'，弃购率高。"></textarea>
 
-      <label>约束（可选）</label>
+      <label id="lblConstraints">Constraints (optional)</label>
       <textarea id="constraints" placeholder="例如：两周内要出结果；不能触达未成年人；不能存储原始音频；预算中等。"></textarea>
 
-      <button class="btn" onclick="runA()">运行 A：诊断 → 研究方案</button>
-      <button class="btn secondary" onclick="runB()" id="runBBtn" disabled>运行 B：生成访谈大纲 + 问卷草案</button>
+      <button class="btn" onclick="runA()" id="btnRunA">Run A: Diagnose → Research Plan</button>
+      <button class="btn secondary" onclick="runB()" id="runBBtn" disabled>Run B: Interview Guide + Survey Draft</button>
 
       <div class="hint">
-        模板下载：
-        <a href="../templates/B端客户售前诊断问卷_旗舰版.docx" download>Word问卷模板</a> ·
-        <a href="../templates/研究策略路由表_旗舰版.xlsx" download>Excel路由表</a>
+        <span id="hintTemplates">Templates:</span>
+        <a href="../templates/B端客户售前诊断问卷_旗舰版.docx" download>Word</a> ·
+        <a href="../templates/研究策略路由表_旗舰版.xlsx" download>Excel</a>
       </div>
 
       <div class="small" style="margin-top:10px;">
-        后端默认地址：<span id="apiBaseShow">http://127.0.0.1:8000</span>
-        · 如果你改了端口，点这里：
-        <a href="#" onclick="setApiBase(); return false;">设置API地址</a>
+        <span id="apiBaseLabel">API Base:</span> <span id="apiBaseShow">http://127.0.0.1:8000</span>
+        · <a href="#" onclick="setApiBase(); return false;" id="linkSetApi">Set API address</a>
       </div>
     </section>
 
     <section class="card">
-      <h2>输出（可执行交付物）</h2>
-      <div class="output" id="out">等待输入…</div>
+      <h2 id="outTitle">Output (Actionable Deliverables)</h2>
+      <div class="output" id="out">Waiting for input…</div>
       <div style="margin-top:12px;">
-        <span class="pill">证据链优先</span>
-        <span class="pill">可行动 + 可验证</span>
-        <span class="pill">只读查询模板</span>
+        <span class="pill">Evidence-first</span>
+        <span class="pill">Actionable + Verifiable</span>
+        <span class="pill">Read-only templates</span>
       </div>
     </section>
   </div>
 
-  <!-- Tab C: Decision Memory -->
   <div id="panelC" class="tab-c-only">
     <div class="tab-c-grid">
       <section class="card">
-        <h2>输入 / 操作</h2>
-        <label>topic（可选）</label>
+        <h2 id="tabCOpTitle">Input / Actions</h2>
+        <label>topic (optional)</label>
         <input id="traceTopic" placeholder="例如：fintech"/>
-        <label>stage（可选）</label>
+        <label>stage (optional)</label>
         <input id="traceStage" placeholder="例如：1-10"/>
-        <button class="btn btn-sm" onclick="loadTraceGraph()">加载 Trace Graph</button>
-        <button class="btn btn-sm secondary" onclick="loadDecisionsSnapshots()">加载最新 Decisions/Snapshots</button>
-        <button class="btn btn-sm secondary" onclick="openApiDocs()">打开 API Docs</button>
-        <div class="hint" style="margin-top:12px;">
-          Trace Graph 需 Decision Memory 后端（uvicorn backend.api.main:app）。API 需 X-API-Key: admin123。
+        <button class="btn btn-sm" onclick="loadTraceGraph()" id="btnLoadGraph">Load Trace Graph</button>
+        <button class="btn btn-sm secondary" onclick="loadDecisionsSnapshots()" id="btnLoadDec">Load Decisions/Snapshots</button>
+        <button class="btn btn-sm secondary" onclick="openApiDocs()" id="btnApiDocs">Open API Docs</button>
+        <div class="hint" style="margin-top:12px;" id="hintTraceGraph">
+          Trace Graph requires Decision Memory backend (uvicorn backend.api.main:app). API needs X-API-Key: admin123.
         </div>
       </section>
 
       <section class="card">
-        <h2>Trace Graph 与 Memory Proof</h2>
+        <h2 id="tabCGraphTitle">Trace Graph & Memory Proof</h2>
+        <div class="rules-card">
+          <h3 id="rulesTitle">Decision Enforcement Rules</h3>
+          <div class="rule-item">
+            <span class="rule-icon">⛔</span>
+            <div class="rule-text">
+              <div class="rule-en" id="rule1En">Rule #1 — No Citation, No Decision. Any decision without historical citation is explicitly rejected by the system (HTTP 400).</div>
+              <div class="rule-zh" id="rule1Zh">规则一 — 无援引，不决策。任何未援引历史证据或决策的判断，都会被系统直接拒绝（HTTP 400）。</div>
+            </div>
+          </div>
+          <div class="rule-item">
+            <span class="rule-icon">🔒</span>
+            <div class="rule-text">
+              <div class="rule-en" id="rule2En">Rule #2 — Falsified conclusions cannot be reverted. If a requirement contradicts a previously falsified decision, it will be blocked.</div>
+              <div class="rule-zh" id="rule2Zh">规则二 — 被证伪的结论不可回退。若新需求与已被证伪的历史决策冲突，系统将阻止该需求回退。</div>
+            </div>
+          </div>
+          <div class="rule-item">
+            <span class="rule-icon">📜</span>
+            <div class="rule-text">
+              <div class="rule-en" id="rule3En">Rule #3 — Memory constrains future decisions. Past evidence and falsification actively constrain future decision space.</div>
+              <div class="rule-zh" id="rule3Zh">规则三 — 记忆约束未来决策。历史证据与证伪结论会主动收缩未来可选决策空间。</div>
+            </div>
+          </div>
+          <div class="rules-footer" id="rulesFooter"></div>
+        </div>
         <div id="graphError" class="err-msg" style="display:none;"></div>
         <div id="graphWrapper" class="graph-container" style="display:none;"></div>
         <div id="graphPlaceholder" class="output" style="min-height:200px;">
-          点击「加载 Trace Graph」获取 nodes/edges 并渲染图谱。
+          <span id="graphPlaceholderText">Click "Load Trace Graph" to fetch nodes/edges and render.</span>
         </div>
         <div id="nodeDetail" class="node-detail" style="display:none;"></div>
         <div class="proof-block" style="margin-top:14px;">
-          <div class="line"><strong>RecallHits Found:</strong> <span id="proofRecall">—</span></div>
-          <div class="line"><strong>Conflict Reason:</strong> <span id="proofConflict">—</span></div>
-          <div class="line"><strong>Final Decision Rationale:</strong> <span id="proofRationale">—</span></div>
-          <div class="hint-text">若 API 无法推导，请从 demo_outputs/demo.log 复制上述三行填入展示。</div>
+          <div class="line"><strong id="proofRecallLabel">RecallHits Found:</strong> <span id="proofRecall">—</span></div>
+          <div class="line"><strong id="proofConflictLabel">Conflict Reason:</strong> <span id="proofConflict">—</span></div>
+          <div class="line"><strong id="proofRationaleLabel">Final Decision Rationale:</strong> <span id="proofRationale">—</span></div>
+          <div class="hint-text" id="proofHint">If API cannot derive, copy from demo_outputs/demo.log.</div>
+        </div>
+        <div class="comparison-module">
+          <h3 id="comparisonTitle" style="grid-column:1/-1; margin:0 0 8px; font-size:15px; color:var(--blue-main);">Why this decision requires memory</h3>
+          <div class="comparison-col">
+            <h4 id="comparisonWithTitle">With Memory Recall</h4>
+            <ul id="comparisonWithList"></ul>
+          </div>
+          <div class="comparison-col">
+            <h4 id="comparisonWithoutTitle">Without Memory Recall</h4>
+            <ul id="comparisonWithoutList"></ul>
+          </div>
+          <p id="comparisonNote" class="comparison-note" style="grid-column:1/-1; margin:8px 0 0;"></p>
         </div>
       </section>
     </div>
@@ -260,23 +322,216 @@
 </main>
 
 <footer>
-  <div class="pill">A段：售前诊断</div>
-  <div class="pill">B段：研究交付</div>
-  <div class="pill">C段：Decision Memory</div>
-  <p style="margin-top:10px;">
-    本Demo用于展示"用户研究如何被Agent化并服务转化提升闭环"，不依赖外部平台抓取数据。
+  <div class="pill">A: Diagnosis</div>
+  <div class="pill">B: Research</div>
+  <div class="pill">C: Decision Memory</div>
+  <p style="margin-top:10px;" id="footerNote">
+    This demo shows how user research is agentified for conversion uplift. No external scraping.
   </p>
 </footer>
 
 <script>
+  const I18N = {
+    en: {
+      pageTitle: "Decision Memory · User Research Agent",
+      pageSubtitle: "B2B pre-sales diagnosis → Research plan routing → Actionable assets + validation metrics (no scraping)",
+      tabA: "A. B2B Diagnosis (Pre-sales)",
+      tabB: "B. User Research Delivery (Qual + Quant)",
+      tabC: "C. Decision Memory (Trace Graph)",
+      formTitle: "Input (for Agent)",
+      formTitleB: "Input (reuse A)",
+      lblIndustry: "Industry",
+      lblMarket: "Target Market",
+      lblStage: "Company Stage",
+      lblGrowth: "Growth Drivers (multi-select, ordered)",
+      lblPositioning: "Business Positioning",
+      lblGoal: "Goal",
+      lblProblem: "Core Problem (with facts/data)",
+      lblConstraints: "Constraints (optional)",
+      hintGrowth: "Use full names, not abbreviations only.",
+      btnRunA: "Run A: Diagnose → Research Plan",
+      btnRunB: "Run B: Interview Guide + Survey Draft",
+      hintTemplates: "Templates:",
+      apiBaseLabel: "API Base:",
+      linkSetApi: "Set API address",
+      outTitle: "Output (Actionable Deliverables)",
+      outWaiting: "Waiting for input…",
+      tabCOpTitle: "Input / Actions",
+      btnLoadGraph: "Load Trace Graph",
+      btnLoadDec: "Load Decisions/Snapshots",
+      btnApiDocs: "Open API Docs",
+      hintTraceGraph: "Trace Graph requires Decision Memory backend (uvicorn backend.api.main:app). API needs X-API-Key: admin123.",
+      tabCGraphTitle: "Trace Graph & Memory Proof",
+      graphPlaceholderText: "Click \"Load Trace Graph\" to fetch nodes/edges and render.",
+      proofRecallLabel: "RecallHits Found:",
+      proofConflictLabel: "Conflict Reason:",
+      proofRationaleLabel: "Final Decision Rationale:",
+      proofHint: "If API cannot derive, copy from demo_outputs/demo.log.",
+      footerNote: "This demo shows how user research is agentified for conversion uplift. No external scraping.",
+      loading: "Loading…",
+      runAProgress: "Running…",
+      runBProgress: "Generating B deliverables…",
+      errBackend: "Error:\n{msg}\n\nEnsure backend is running (python backend/app.py) and API address is correct.",
+      errRunAFirst: "Please run A first.",
+      errLoadGraph: "Load failed: {msg}\n\nCheck: 1) Backend running (uvicorn backend.api.main:app --port 8000); 2) API_BASE correct; 3) /api/v1/trace_graph exists.",
+      proofCopyHint: "— (copy from demo.log)",
+      alertDecLoaded: "Decisions/Traces loaded (see console). No dedicated endpoint; use trace_graph.",
+      alertNoEndpoint: "Backend has no /api/v1/evidence/search or /api/v1/traces. Load Trace Graph first.",
+      alertLoadFail: "Load failed: {msg}",
+      comparisonTitle: "Why this decision requires memory",
+      comparisonWithTitle: "With Memory Recall",
+      comparisonWithItems: [
+        "The agent recalls a previously falsified decision (Round 2).",
+        "A contradiction is detected.",
+        "The system rejects reverting the requirement.",
+        "Decision consistency is preserved."
+      ],
+      comparisonWithoutTitle: "Without Memory Recall",
+      comparisonWithoutItems: [
+        "The agent only sees the latest interview.",
+        "No contradiction is detected.",
+        "The requirement would be reverted incorrectly.",
+        "The organization repeats a known failure."
+      ],
+      comparisonNote: "This is not logging, this is decision constraint. The failure is not a model capability issue—it is the absence of memory constraint.",
+      rulesTitle: "Decision Enforcement Rules",
+      rulesFooter: "This system enforces decisions, it does not suggest them."
+    },
+    zh: {
+      pageTitle: "决策记忆 · 用户研究 Agent",
+      pageSubtitle: "B端售前诊断 → 研究方案路由 → 可执行资产 + 验证口径（不依赖爬虫）",
+      tabA: "A. B端客户诊断（售前/立项）",
+      tabB: "B. 用户研究交付（定性+定量）",
+      tabC: "C. Decision Memory 可视化（Trace Graph）",
+      formTitle: "输入（给Agent）",
+      formTitleB: "输入（沿用A段信息）",
+      lblIndustry: "行业",
+      lblMarket: "目标市场",
+      lblStage: "公司阶段",
+      lblGrowth: "增长驱动方式（可多选，按主次排序）",
+      lblPositioning: "业务定位",
+      lblGoal: "本次目标",
+      lblProblem: "核心问题（尽量包含事实/数据）",
+      lblConstraints: "约束（可选）",
+      hintGrowth: "提示：不要只写缩写。请用中文意思（括号里写英文全称）。",
+      btnRunA: "运行 A：诊断 → 研究方案",
+      btnRunB: "运行 B：生成访谈大纲 + 问卷草案",
+      hintTemplates: "模板下载：",
+      apiBaseLabel: "后端默认地址：",
+      linkSetApi: "设置API地址",
+      outTitle: "输出（可执行交付物）",
+      outWaiting: "等待输入…",
+      tabCOpTitle: "输入 / 操作",
+      btnLoadGraph: "加载 Trace Graph",
+      btnLoadDec: "加载最新 Decisions/Snapshots",
+      btnApiDocs: "打开 API Docs",
+      hintTraceGraph: "Trace Graph 需 Decision Memory 后端（uvicorn backend.api.main:app）。API 需 X-API-Key: admin123。",
+      tabCGraphTitle: "Trace Graph 与 Memory Proof",
+      graphPlaceholderText: "点击「加载 Trace Graph」获取 nodes/edges 并渲染图谱。",
+      proofRecallLabel: "RecallHits Found:",
+      proofConflictLabel: "Conflict Reason:",
+      proofRationaleLabel: "Final Decision Rationale:",
+      proofHint: "若 API 无法推导，请从 demo_outputs/demo.log 复制上述三行填入展示。",
+      footerNote: "本Demo用于展示「用户研究如何被Agent化并服务转化提升闭环」，不依赖外部平台抓取数据。",
+      loading: "加载中…",
+      runAProgress: "运行中…",
+      runBProgress: "生成B段产物中…",
+      errBackend: "出错：\n{msg}\n\n请确认：后端已启动（python backend/app.py），且API地址正确。",
+      errRunAFirst: "请先运行A段。",
+      errLoadGraph: "加载失败：{msg}\n\n请检查：1) 后端是否启动（uvicorn backend.api.main:app --port 8000）；2) API_BASE 是否正确；3) /api/v1/trace_graph 是否存在。",
+      proofCopyHint: "—（需从 demo.log 复制）",
+      alertDecLoaded: "Decisions/Traces 已加载（见控制台）。当前无独立展示端点，可查看 trace_graph。",
+      alertNoEndpoint: "后端暂无对应端点。请先加载 Trace Graph。",
+      alertLoadFail: "加载失败：{msg}",
+      comparisonTitle: "为什么这个决策必须依赖记忆",
+      comparisonWithTitle: "有记忆回溯",
+      comparisonWithItems: [
+        "Agent 回溯到 Round 2 中已被证伪的决策。",
+        "系统检测到新访谈与历史结论的冲突。",
+        "系统拒绝需求回退。",
+        "决策演化保持一致性。"
+      ],
+      comparisonWithoutTitle: "如果没有记忆",
+      comparisonWithoutItems: [
+        "Agent 只能看到最新访谈。",
+        "无法识别与历史结论的冲突。",
+        "需求会被错误回退。",
+        "组织会重复已经失败过的决策。"
+      ],
+      comparisonNote: "这不是日志，这是决策约束。错误不是模型能力问题，而是缺失记忆约束。",
+      rulesTitle: "决策强制规则",
+      rulesFooter: "本系统强制执行决策，而非建议决策。"
+    }
+  };
+
+  let LANG = localStorage.getItem("LANG") || "en";
   let CURRENT_DIAGNOSE = null;
   let TAB = 'A';
   let API_BASE = localStorage.getItem("API_BASE") || "http://127.0.0.1:8000";
   const API_KEY = "admin123";
-  document.getElementById("apiBaseShow").innerText = API_BASE;
-
   let visNetworkInstance = null;
   let lastTraceGraphData = null;
+
+  function setLang(lang) {
+    LANG = lang;
+    localStorage.setItem("LANG", lang);
+    document.getElementById("langEn").classList.toggle("active", lang === "en");
+    document.getElementById("langZh").classList.toggle("active", lang === "zh");
+    applyLang();
+  }
+
+  function applyLang() {
+    const t = I18N[LANG];
+    document.getElementById("pageTitle").textContent = t.pageTitle;
+    document.getElementById("pageSubtitle").textContent = t.pageSubtitle;
+    document.getElementById("tabA").textContent = t.tabA;
+    document.getElementById("tabB").textContent = t.tabB;
+    document.getElementById("tabC").textContent = t.tabC;
+    document.getElementById("formTitle").textContent = TAB === 'A' ? t.formTitle : (TAB === 'B' ? t.formTitleB : t.formTitle);
+    document.getElementById("lblIndustry").textContent = t.lblIndustry;
+    document.getElementById("lblMarket").textContent = t.lblMarket;
+    document.getElementById("lblStage").textContent = t.lblStage;
+    document.getElementById("lblGrowth").textContent = t.lblGrowth;
+    document.getElementById("lblPositioning").textContent = t.lblPositioning;
+    document.getElementById("lblGoal").textContent = t.lblGoal;
+    document.getElementById("lblProblem").textContent = t.lblProblem;
+    document.getElementById("lblConstraints").textContent = t.lblConstraints;
+    document.getElementById("hintGrowth").textContent = t.hintGrowth;
+    document.getElementById("btnRunA").textContent = t.btnRunA;
+    document.getElementById("runBBtn").textContent = t.btnRunB;
+    document.getElementById("hintTemplates").textContent = t.hintTemplates;
+    document.getElementById("apiBaseLabel").textContent = t.apiBaseLabel;
+    document.getElementById("linkSetApi").textContent = t.linkSetApi;
+    document.getElementById("outTitle").textContent = t.outTitle;
+    document.getElementById("tabCOpTitle").textContent = t.tabCOpTitle;
+    document.getElementById("btnLoadGraph").textContent = t.btnLoadGraph;
+    document.getElementById("btnLoadDec").textContent = t.btnLoadDec;
+    document.getElementById("btnApiDocs").textContent = t.btnApiDocs;
+    document.getElementById("hintTraceGraph").textContent = t.hintTraceGraph;
+    document.getElementById("tabCGraphTitle").textContent = t.tabCGraphTitle;
+    document.getElementById("graphPlaceholderText").textContent = t.graphPlaceholderText;
+    document.getElementById("proofRecallLabel").textContent = t.proofRecallLabel;
+    document.getElementById("proofConflictLabel").textContent = t.proofConflictLabel;
+    document.getElementById("proofRationaleLabel").textContent = t.proofRationaleLabel;
+    document.getElementById("proofHint").textContent = t.proofHint;
+    document.getElementById("footerNote").textContent = t.footerNote;
+    document.getElementById("comparisonTitle").textContent = t.comparisonTitle;
+    document.getElementById("comparisonWithTitle").textContent = t.comparisonWithTitle;
+    document.getElementById("comparisonWithoutTitle").textContent = t.comparisonWithoutTitle;
+    document.getElementById("comparisonNote").textContent = t.comparisonNote;
+    document.getElementById("rulesTitle").textContent = t.rulesTitle;
+    document.getElementById("rulesFooter").textContent = t.rulesFooter;
+    const withList = document.getElementById("comparisonWithList");
+    withList.innerHTML = (t.comparisonWithItems || []).map(s => `<li>${s}</li>`).join("");
+    const withoutList = document.getElementById("comparisonWithoutList");
+    withoutList.innerHTML = (t.comparisonWithoutItems || []).map(s => `<li>${s}</li>`).join("");
+    if (document.getElementById("out").textContent === "Waiting for input…" || document.getElementById("out").textContent === "等待输入…") {
+      document.getElementById("out").textContent = t.outWaiting;
+    }
+  }
+
+  document.getElementById("apiBaseShow").innerText = API_BASE;
+  setLang(LANG);
 
   function switchTab(t){
     TAB = t;
@@ -285,11 +540,12 @@
     document.getElementById("tabC").classList.toggle("active", t==='C');
     document.getElementById("panelAB").style.display = (t==='A' || t==='B') ? 'grid' : 'none';
     document.getElementById("panelC").classList.toggle("visible", t==='C');
-    document.getElementById("formTitle").innerText = (t==='A') ? "输入（给Agent）" : (t==='B') ? "输入（沿用A段信息）" : "";
+    const t2 = I18N[LANG];
+    document.getElementById("formTitle").textContent = (t==='A') ? t2.formTitle : (t==='B') ? t2.formTitleB : t2.formTitle;
   }
 
   function setApiBase(){
-    const v = prompt("请输入后端API地址（例如 http://127.0.0.1:8000 ）", API_BASE);
+    const v = prompt(LANG === 'zh' ? "请输入后端API地址（例如 http://127.0.0.1:8000 ）" : "Enter API base (e.g. http://127.0.0.1:8000)", API_BASE);
     if(!v) return;
     API_BASE = v.replace(/\/+$/,'');
     localStorage.setItem("API_BASE", API_BASE);
@@ -299,10 +555,9 @@
   function readInput(){
     const growthText = document.getElementById('growth').value || "";
     const growthList = growthText.split("\n").map(x=>x.trim()).filter(Boolean);
-
     return {
-      industry: document.getElementById('industry').value || "未填写",
-      market: document.getElementById('market').value || "未填写",
+      industry: document.getElementById('industry').value || (LANG === 'zh' ? "未填写" : "N/A"),
+      market: document.getElementById('market').value || (LANG === 'zh' ? "未填写" : "N/A"),
       company_stage: document.getElementById('stage').value,
       growth_driver: growthList.length ? growthList : ["营销驱动增长（Marketing-Led Growth, MLG）"],
       biz_positioning: document.getElementById('positioning').value,
@@ -325,114 +580,150 @@
     return await res.json();
   }
 
-  function pretty(obj){
-    return JSON.stringify(obj, null, 2);
-  }
+  function pretty(obj){ return JSON.stringify(obj, null, 2); }
 
   async function runA(){
     const payload = readInput();
     const out = document.getElementById('out');
-    out.innerText = "运行中…";
+    const t = I18N[LANG];
+    out.innerText = t.runAProgress;
     try{
       const diag = await post("/api/diagnose", payload);
       CURRENT_DIAGNOSE = diag;
       const plan = await post("/api/research_plan", { diagnose: diag, timeline: "2-4周", budget_level: "中" });
 
       let txt = "";
-      txt += "【A段：售前诊断结果】\n";
-      txt += `- 公司阶段：${diag.stage}\n`;
-      txt += `- 增长驱动：${(diag.growth_driver||[]).join(" / ")}\n`;
-      txt += `- 业务定位：${diag.biz_positioning}\n`;
-      txt += `- 目标：${diag.goal}\n`;
-      txt += `- 问题类型：${(diag.problem_types||[]).join(" / ")}\n`;
-      txt += `- 紧急度：${diag.urgency}；可控性：${diag.controllability}\n\n`;
-
-      txt += "【推荐路线】\n";
-      (diag.recommended_route||[]).forEach(x=>{ txt += `- ${x}\n`; });
-      txt += "\n【研究方案（摘要）】\n";
-      txt += `- 定性样本建议：${plan.qualitative.recommended_n}\n`;
-      txt += `- 定量样本建议：${plan.quantitative.recommended_n}\n`;
-      txt += `- 交付物重点：\n`;
-      (plan.deliverables||[]).forEach(x=>{ txt += `  · ${x}\n`; });
-
-      txt += "\n【验证指标口径（示例）】\n";
-      (plan.validation_metrics||[]).forEach(m=>{
-        txt += `- ${m.metric}：${m.definition}${m.note?("（"+m.note+"）"):""}\n`;
-      });
-
-      txt += "\n【下一步】\n";
-      txt += "- 点“运行B”生成：售前提问清单、45分钟访谈大纲、定量问卷草案与数据质量规则。\n";
+      if (LANG === 'zh') {
+        txt += "【A段：售前诊断结果】\n";
+        txt += `- 公司阶段：${diag.stage}\n`;
+        txt += `- 增长驱动：${(diag.growth_driver||[]).join(" / ")}\n`;
+        txt += `- 业务定位：${diag.biz_positioning}\n`;
+        txt += `- 目标：${diag.goal}\n`;
+        txt += `- 问题类型：${(diag.problem_types||[]).join(" / ")}\n`;
+        txt += `- 紧急度：${diag.urgency}；可控性：${diag.controllability}\n\n`;
+        txt += "【推荐路线】\n";
+        (diag.recommended_route||[]).forEach(x=>{ txt += `- ${x}\n`; });
+        txt += "\n【研究方案（摘要）】\n";
+        txt += `- 定性样本建议：${plan.qualitative.recommended_n}\n`;
+        txt += `- 定量样本建议：${plan.quantitative.recommended_n}\n`;
+        txt += `- 交付物重点：\n`;
+        (plan.deliverables||[]).forEach(x=>{ txt += `  · ${x}\n`; });
+        txt += "\n【验证指标口径（示例）】\n";
+        (plan.validation_metrics||[]).forEach(m=>{
+          txt += `- ${m.metric}：${m.definition}${m.note?("（"+m.note+"）"):""}\n`;
+        });
+        txt += "\n【下一步】\n";
+        txt += "- 点「运行B」生成：售前提问清单、45分钟访谈大纲、定量问卷草案与数据质量规则。\n";
+      } else {
+        txt += "【A: Diagnosis Result】\n";
+        txt += `- Stage: ${diag.stage}\n`;
+        txt += `- Growth drivers: ${(diag.growth_driver||[]).join(" / ")}\n`;
+        txt += `- Positioning: ${diag.biz_positioning}\n`;
+        txt += `- Goal: ${diag.goal}\n`;
+        txt += `- Problem types: ${(diag.problem_types||[]).join(" / ")}\n`;
+        txt += `- Urgency: ${diag.urgency}; Controllability: ${diag.controllability}\n\n`;
+        txt += "【Recommended Route】\n";
+        (diag.recommended_route||[]).forEach(x=>{ txt += `- ${x}\n`; });
+        txt += "\n【Research Plan (Summary)】\n";
+        txt += `- Qual sample: ${plan.qualitative.recommended_n}\n`;
+        txt += `- Quant sample: ${plan.quantitative.recommended_n}\n`;
+        txt += `- Deliverables:\n`;
+        (plan.deliverables||[]).forEach(x=>{ txt += `  · ${x}\n`; });
+        txt += "\n【Validation Metrics】\n";
+        (plan.validation_metrics||[]).forEach(m=>{
+          txt += `- ${m.metric}: ${m.definition}${m.note?(" ("+m.note+")"):""}\n`;
+        });
+        txt += "\n【Next】\n";
+        txt += "- Click \"Run B\" for interview guide, survey draft, data quality rules.\n";
+      }
 
       out.innerText = txt;
       document.getElementById("runBBtn").disabled = false;
       switchTab('A');
     }catch(e){
-      out.innerText = "出错：\n" + e.message + "\n\n请确认：后端已启动（python backend/app.py），且API地址正确。";
+      out.innerText = t.errBackend.replace("{msg}", e.message);
       document.getElementById("runBBtn").disabled = true;
     }
   }
 
   async function runB(){
     if(!CURRENT_DIAGNOSE){
-      alert("请先运行A段。");
+      alert(I18N[LANG].errRunAFirst);
       return;
     }
     const payload = readInput();
     const out = document.getElementById('out');
-    out.innerText = "生成B段产物中…";
+    const t = I18N[LANG];
+    out.innerText = t.runBProgress;
     try{
       const b2b = await post("/api/b2b_questions", payload);
       const qual = await post("/api/qual_guide", payload);
       const quant = await post("/api/quant_survey", payload);
 
       let txt = "";
-      txt += "【B段：可直接交付的研究资产（草案）】\n\n";
-
-      txt += "1) 售前提问清单（给销售/售前）\n";
-      (b2b.questions||[]).forEach((q,idx)=>{
-        txt += `- [${q.section}] ${q.q}\n`;
-      });
-
-      txt += "\n2) 45分钟定性访谈大纲（半结构化）\n";
-      txt += `- 时长：${qual.qual_guide.duration_minutes}分钟\n`;
-      txt += "- 原则：\n";
-      (qual.qual_guide.principles||[]).forEach(p=> txt += `  · ${p}\n`);
-      txt += "\n- 结构：\n";
-      (qual.qual_guide.sections||[]).forEach(sec=>{
-        txt += `  · ${sec.t}\n`;
-        (sec.prompts||[]).forEach(p=> txt += `     - ${p}\n`);
-      });
-
-      txt += "\n3) 定量问卷草案（模块化，可直接落到问卷系统）\n";
-      (quant.quant_survey.modules||[]).forEach(mod=>{
-        txt += `- 模块：${mod.name}\n`;
-        if(mod.note) txt += `  说明：${mod.note}\n`;
-        (mod.questions||[]).forEach(q=>{
-          txt += `  · ${q.id}（${q.type}）${q.q}\n`;
+      if (LANG === 'zh') {
+        txt += "【B段：可直接交付的研究资产（草案）】\n\n";
+        txt += "1) 售前提问清单（给销售/售前）\n";
+        (b2b.questions||[]).forEach((q)=>{ txt += `- [${q.section}] ${q.q}\n`; });
+        txt += "\n2) 45分钟定性访谈大纲（半结构化）\n";
+        txt += `- 时长：${qual.qual_guide.duration_minutes}分钟\n`;
+        txt += "- 原则：\n";
+        (qual.qual_guide.principles||[]).forEach(p=> txt += `  · ${p}\n`);
+        txt += "\n- 结构：\n";
+        (qual.qual_guide.sections||[]).forEach(sec=>{
+          txt += `  · ${sec.t}\n`;
+          (sec.prompts||[]).forEach(p=> txt += `     - ${p}\n`);
         });
-      });
-
-      txt += "\n4) 数据质量与清洗规则（自动化）\n";
-      const dq = quant.quant_survey.data_quality || {};
-      txt += `- 速度异常规则：${dq.speeding_rule || "—"}\n`;
-      txt += `- 直线作答规则：${dq.straightlining_rule || "—"}\n`;
-      txt += `- 矛盾检测规则：${dq.contradiction_rule || "—"}\n`;
-      (dq.attention_checks||[]).forEach(x=> txt += `- 注意力题：${x}\n`);
-
-      txt += "\n5) 只读数据查询模板（Text2SQL的受控替代）\n";
+        txt += "\n3) 定量问卷草案（模块化）\n";
+        (quant.quant_survey.modules||[]).forEach(mod=>{
+          txt += `- 模块：${mod.name}\n`;
+          if(mod.note) txt += `  说明：${mod.note}\n`;
+          (mod.questions||[]).forEach(q=>{ txt += `  · ${q.id}（${q.type}）${q.q}\n`; });
+        });
+        txt += "\n4) 数据质量与清洗规则\n";
+        const dq = quant.quant_survey.data_quality || {};
+        txt += `- 速度异常规则：${dq.speeding_rule || "—"}\n`;
+        txt += `- 直线作答规则：${dq.straightlining_rule || "—"}\n`;
+        txt += `- 矛盾检测规则：${dq.contradiction_rule || "—"}\n`;
+        (dq.attention_checks||[]).forEach(x=> txt += `- 注意力题：${x}\n`);
+        txt += "\n5) 只读数据查询模板\n";
+      } else {
+        txt += "【B: Actionable Research Assets (Draft)】\n\n";
+        txt += "1) Pre-sales Question List\n";
+        (b2b.questions||[]).forEach((q)=>{ txt += `- [${q.section}] ${q.q}\n`; });
+        txt += "\n2) 45-min Qualitative Interview Guide\n";
+        txt += `- Duration: ${qual.qual_guide.duration_minutes} min\n`;
+        txt += "- Principles:\n";
+        (qual.qual_guide.principles||[]).forEach(p=> txt += `  · ${p}\n`);
+        txt += "\n- Structure:\n";
+        (qual.qual_guide.sections||[]).forEach(sec=>{
+          txt += `  · ${sec.t}\n`;
+          (sec.prompts||[]).forEach(p=> txt += `     - ${p}\n`);
+        });
+        txt += "\n3) Quantitative Survey Draft (Modular)\n";
+        (quant.quant_survey.modules||[]).forEach(mod=>{
+          txt += `- Module: ${mod.name}\n`;
+          if(mod.note) txt += `  Note: ${mod.note}\n`;
+          (mod.questions||[]).forEach(q=>{ txt += `  · ${q.id} (${q.type}) ${q.q}\n`; });
+        });
+        txt += "\n4) Data Quality & Cleaning Rules\n";
+        const dq = quant.quant_survey.data_quality || {};
+        txt += `- Speeding: ${dq.speeding_rule || "—"}\n`;
+        txt += `- Straightlining: ${dq.straightlining_rule || "—"}\n`;
+        txt += `- Contradiction: ${dq.contradiction_rule || "—"}\n`;
+        (dq.attention_checks||[]).forEach(x=> txt += `- Attention: ${x}\n`);
+        txt += "\n5) Read-only Query Templates\n";
+      }
       const sql = await fetch(`${API_BASE}/api/sql_templates`).then(r=>r.json());
-      (sql.templates||[]).forEach(t=>{
-        txt += `- ${t.name}：${t.description}\n`;
-      });
+      (sql.templates||[]).forEach(tm=>{ txt += `- ${tm.name}: ${tm.description}\n`; });
 
       out.innerText = txt;
       switchTab('B');
     }catch(e){
-      out.innerText = "出错：\n" + e.message;
+      out.innerText = "Error: " + e.message;
     }
   }
 
-  // ---------- Tab C: Decision Memory ----------
   function getTraceGraphUrl(){
     const topic = (document.getElementById('traceTopic').value || '').trim();
     const stage = (document.getElementById('traceStage').value || '').trim();
@@ -448,17 +739,16 @@
     const errEl = document.getElementById('graphError');
     const wrapper = document.getElementById('graphWrapper');
     const placeholder = document.getElementById('graphPlaceholder');
+    const t = I18N[LANG];
     errEl.style.display = 'none';
     errEl.textContent = '';
     placeholder.style.display = 'block';
     wrapper.style.display = 'none';
-    placeholder.innerText = '加载中…';
+    document.getElementById("graphPlaceholderText").textContent = t.loading;
 
     try {
       const url = getTraceGraphUrl();
-      const res = await fetch(url, {
-        headers: { "X-API-Key": API_KEY }
-      });
+      const res = await fetch(url, { headers: { "X-API-Key": API_KEY } });
       if(!res.ok){
         const text = await res.text();
         throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
@@ -471,9 +761,9 @@
       wrapper.style.display = 'block';
     } catch(e) {
       placeholder.style.display = 'block';
-      placeholder.innerText = '';
+      document.getElementById("graphPlaceholderText").textContent = t.graphPlaceholderText;
       errEl.style.display = 'block';
-      errEl.textContent = '加载失败：' + e.message + '\n\n请检查：1) 后端是否启动（uvicorn backend.api.main:app --port 8000）；2) API_BASE 是否正确；3) /api/v1/trace_graph 是否存在。';
+      errEl.textContent = t.errLoadGraph.replace("{msg}", e.message);
     }
   }
 
@@ -532,7 +822,6 @@
     const visNodes = new vis.DataSet(nodes.map(n => ({ id: n.id, label: n.label, shape: n.shape, color: n.color, title: n.title })));
     const visEdges = new vis.DataSet(edges);
     const visData = { nodes: visNodes, edges: visEdges };
-
     const options = {
       nodes: { font: { size: 12 } },
       edges: { font: { size: 10, align: 'middle' } },
@@ -541,7 +830,6 @@
 
     const network = new vis.Network(container, visData, options);
     visNetworkInstance = network;
-
     const nodeMap = {};
     nodes.forEach(n => { nodeMap[n.id] = n; });
 
@@ -565,30 +853,32 @@
 
   function updateProofFromGraph(data){
     const nodes = data.nodes || [];
-    const edges = data.edges || [];
     const decisionCount = nodes.filter(n => (n.label || n.type) === 'Decision').length;
+    const t = I18N[LANG];
+    const copyHint = t.proofCopyHint;
     document.getElementById('proofRecall').textContent = decisionCount > 0
       ? `${decisionCount} cells (includes FALSIFIED:true)`
-      : '—（需从 demo.log 复制）';
-    document.getElementById('proofConflict').textContent = 'Detected contradiction with Round 2 Falsification (Decision ID: …) — 需从 demo.log 复制';
-    document.getElementById('proofRationale').textContent = 'Conflict Detected: Rejected reverting to speed-focus; maintained quality-focus due to previous falsification. — 需从 demo.log 复制';
+      : copyHint;
+    document.getElementById('proofConflict').textContent = 'Detected contradiction with Round 2 Falsification (Decision ID: …) ' + (LANG === 'zh' ? '— 需从 demo.log 复制' : '— copy from demo.log');
+    document.getElementById('proofRationale').textContent = 'Conflict Detected: Rejected reverting to speed-focus; maintained quality-focus due to previous falsification. ' + (LANG === 'zh' ? '— 需从 demo.log 复制' : '— copy from demo.log');
   }
 
   async function loadDecisionsSnapshots(){
+    const t = I18N[LANG];
     try {
       const [decRes, snapRes] = await Promise.all([
         fetch(`${API_BASE}/api/v1/evidence/search`, { headers: { "X-API-Key": API_KEY } }).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch(`${API_BASE}/api/v1/traces`, { headers: { "X-API-Key": API_KEY } }).then(r => r.ok ? r.json() : null).catch(() => null)
       ]);
       if (decRes || snapRes) {
-        alert('Decisions/Traces 已加载（见控制台）。当前无独立 Decisions/Snapshots 展示端点，可查看 trace_graph。');
+        alert(t.alertDecLoaded);
         if (decRes) console.log('Evidence search:', decRes);
         if (snapRes) console.log('Traces:', snapRes);
       } else {
-        alert('后端暂无 /api/v1/evidence/search 或 /api/v1/traces 端点，或返回非 200。请先加载 Trace Graph。');
+        alert(t.alertNoEndpoint);
       }
     } catch(e) {
-      alert('加载失败：' + e.message);
+      alert(t.alertLoadFail.replace("{msg}", e.message));
     }
   }
 
