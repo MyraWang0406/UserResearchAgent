@@ -1,0 +1,1 @@
+This project demonstrates a memory-driven decision system where historical evidence and falsified conclusions actively constrain future decisions. Unlike log-based agents, recall in this system directly affects decision outcomes, preventing organizational rollback and repeated failure.

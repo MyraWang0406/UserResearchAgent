@@ -1,0 +1,66 @@
+{
+  "nodes": [
+    {
+      "id": "evidence_1771119630.405913",
+      "type": "Evidence",
+      "summary": "New user insists on extreme AI speed!"
+    },
+    {
+      "id": "evidence_1771119630.399502",
+      "type": "Evidence",
+      "summary": "Users want fast AI generation speed."
+    },
+    {
+      "id": "decision_1771119630.405971",
+      "type": "Decision",
+      "summary": "Conflict Detected: Rejected reverting to speed-focus; maintained quality-focus due to previous falsification."
+    },
+    {
+      "id": "decision_1771119630.400876",
+      "type": "Decision",
+      "summary": "Metrics FALSIFY previous speed hypothesis."
+    },
+    {
+      "id": "decision_1771119630.39957",
+      "type": "Decision",
+      "summary": "Initial requirement generation based on interview."
+    },
+    {
+      "id": "requirement_1771119630.405983",
+      "type": "Requirement",
+      "summary": "..."
+    },
+    {
+      "id": "requirement_1771119630.399588",
+      "type": "Requirement",
+      "summary": "..."
+    },
+    {
+      "id": "outcome_1771119630.400838",
+      "type": "Outcome",
+      "summary": "..."
+    }
+  ],
+  "edges": [
+    {
+      "source": "evidence_1771119630.405913",
+      "target": "decision_1771119630.405971"
+    },
+    {
+      "source": "outcome_1771119630.400838",
+      "target": "decision_1771119630.400876"
+    },
+    {
+      "source": "evidence_1771119630.399502",
+      "target": "decision_1771119630.39957"
+    },
+    {
+      "source": "decision_1771119630.405971",
+      "target": "requirement_1771119630.405983"
+    },
+    {
+      "source": "decision_1771119630.39957",
+      "target": "requirement_1771119630.399588"
+    }
+  ]
+}

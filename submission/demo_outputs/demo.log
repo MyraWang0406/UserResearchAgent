@@ -1,0 +1,24 @@
+=== Decision Memory MVP Demo Log - 2026-02-15T09:40:30.396783 ===
+
+============================================================
+Decision Memory MVP - Memory Genesis Track 1 (Standardized)
+============================================================
+
+--- Round 1: Interview -> Evidence -> Decision -> Req v1 ---
+Decision Rationale: Initial requirement generation based on interview.
+Citations: evidence_1771119630.399502
+
+--- Round 2: Metrics -> Outcome -> Decision(Falsify) -> Req v2 ---
+Verdict: FALSIFY (CVR < 2%)
+Decision: Metrics falsified previous hypothesis. Decision ID: decision_1771119630.400876
+
+--- Round 3: New Conflict Interview -> Recall -> Req v3 ---
+[EverMemOS] Recalling historical decisions to check for conflicts...
+RecallHits Found: 2 cells
+  - [Hit] ID: decision_1771119630.400876 | Tags: ['domain:fintech', 'stage:1-10', 'growth:PLG', 'FALSIFIED:true', 'type:decision'] | Summary: Metrics FALSIFY previous speed hypothesis....
+  - [Hit] ID: decision_1771119630.39957 | Tags: ['domain:fintech', 'stage:1-10', 'growth:PLG', 'type:decision'] | Summary: Initial requirement generation based on interview....
+Conflict Reason: Detected contradiction with Round 2 Falsification (Decision ID: decision_1771119630.400876)
+Final Decision Rationale: Conflict Detected: Rejected reverting to speed-focus; maintained quality-focus due to previous falsification.
+
+
+[Demo] MVP Outputs saved to demo_outputs/ (Nodes: 8, Edges: 5)
