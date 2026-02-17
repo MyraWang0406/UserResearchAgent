@@ -74,7 +74,7 @@ Decision Memory is an organizational infrastructure where historical evidence an
 
 ## 前端入口与部署说明 / Frontend entry and deployment
 
-- **若出现「Failed to fetch」：** 在页面下方点击「设置API地址」，填写 **Railway 应用的 Public URL**（如 `https://xxx.up.railway.app`），不要填 `:8000`。生产环境默认 API 为 `https://userresearchagent.up.railway.app`，若你的 Railway 域名不同请在此处修改。
+- **若出现「Failed to fetch」：** 在页面下方点击「设置API地址」，填写 **Railway 应用的 Public URL**（如 `https://xxx.up.railway.app`），不要填 `:8000`。生产环境默认 API 为 `https://userinsightagent-production.up.railway.app`（当前 Railway 服务地址），若你的 Railway 域名不同请在此处修改。
 - **唯一前端入口文件：** `frontend/index.html`（无构建步骤，纯静态）。
 - **本地预览：** 在项目根目录执行 `start.bat`（Windows）或手动运行：
   - 后端：`uvicorn backend.app:app --reload --host 127.0.0.1 --port 8000`
@@ -84,8 +84,8 @@ Decision Memory is an organizational infrastructure where historical evidence an
 
 ## 验收清单 / Acceptance checklist
 
-- **验收 1：** 部署 Railway 后，打开 **你的 Railway Public URL/docs**（如 `https://userresearchagent.up.railway.app/docs`）返回 **200**（后端 API 文档可访问）。
-- **验收 2：** 部署 Cloudflare Pages 后，打开前端地址，不设置 API 时默认请求上述 Railway URL；若域名不同则点击「设置API地址」填入 Railway URL，Run A / Run B **不出现 Failed to fetch**。
+- **验收 1：** 打开 `https://userinsightagent-production.up.railway.app/docs` 返回 **200**（后端 API 文档可访问）。
+- **验收 2：** 打开前端地址，不设置 API 时默认请求上述 Railway URL；Run A / Run B **不出现 Failed to fetch**。
 - 若出现 Failed to fetch，页面会提示「请点击下方 设置API地址」；生产环境填 Railway 的 Public URL（不要填 :8000）。
 
 ## How to judge it's memory-driven (not storage)

@@ -18,8 +18,8 @@
 4. **环境变量（必配）：**
    - `EVERMEM_URL`：EverMemOS Cloud 的 API 根地址（例如 `https://your-evermem-cloud.example.com`）。不设则后端以 **Mock 模式** 运行（记忆不持久化）。
    - 若 EverMem Cloud 需要 API Key，请按 EverMem 文档在请求头或 URL 中配置；本仓库当前通过 `EVERMEM_URL` 区分 Mock/Real。
-5. 部署完成后，在 Railway 项目 **Settings → Domains** 中查看 **Public URL**（形如 `https://xxx.up.railway.app`）。
-6. 若该 URL 与前端默认 `https://userresearchagent.up.railway.app` 不一致，用户需在页面点击「设置API地址」填写实际 Railway URL。
+5. 部署完成后，在 Railway 项目 **Settings → Domains** 中查看 **Public URL**（当前为 `https://userinsightagent-production.up.railway.app`）。
+6. 前端已默认使用该 URL；若你部署的 Railway 域名不同，用户需在页面点击「设置API地址」填写实际 URL。
 
 ---
 
@@ -39,7 +39,7 @@
 
 ## 3. 前后端联调
 
-- 前端（Cloudflare Pages）默认请求的后端地址为 **`https://userresearchagent.up.railway.app`**（见 `frontend/index.html` 与根目录 `index.html` 中的 `getDefaultApiBase()`）。
+- 前端（Cloudflare Pages）默认请求的后端地址为 **`https://userinsightagent-production.up.railway.app`**（见 `frontend/index.html` 与根目录 `index.html` 中的 `getDefaultApiBase()`）。
 - 若你的 Railway 应用 URL 不同，用户打开前端后点击「设置API地址」，填入 Railway 的 **Public URL** 即可（不要带端口，不要填 `:8000`）。
 - 后端已开启 CORS（`allow_origins=["*"]`），Pages 域名可正常跨域请求 Railway。
 
@@ -59,6 +59,6 @@
 
 ## 5. 验收（Railway + Pages）
 
-- **后端：** 打开 `https://你的Railway域名/docs`（如 `https://userresearchagent.up.railway.app/docs`）应返回 200，Swagger 可访问。
-- **前端：** 打开 Cloudflare Pages 站点，不设置 API 时默认请求上述 Railway URL；若你的 URL 不同，设置后 Run A / Run B 不应出现 Failed to fetch。
+- **后端：** 打开 `https://userinsightagent-production.up.railway.app/docs` 应返回 200，Swagger 可访问。
+- **前端：** 打开 Cloudflare Pages 站点，不设置 API 时默认请求上述 Railway URL；Run A / Run B 不应出现 Failed to fetch。
 - **EverMem：** 配置好 `EVERMEM_URL` 后，后端日志应出现 `[EverMemOS] Running in REAL mode: ...`，否则为 Mock 模式。

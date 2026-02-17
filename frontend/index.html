@@ -245,7 +245,7 @@
       </div>
 
       <div class="small" style="margin-top:10px;">
-        <span id="apiBaseLabel">API Base:</span> <span id="apiBaseShow">https://userresearchagent.up.railway.app</span>
+        <span id="apiBaseLabel">API Base:</span> <span id="apiBaseShow">https://userinsightagent-production.up.railway.app</span>
         · <a href="#" onclick="setApiBase(); return false;" id="linkSetApi">Set API address</a>
       </div>
       <div class="hint" id="apiBaseHint" style="margin-top:4px;"></div>
@@ -674,8 +674,8 @@
       if (stored) return stored;
       const o = (typeof window !== "undefined" && window.location && window.location.origin) ? window.location.origin : "";
       if (!o || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(o)) return "http://127.0.0.1:8000";
-      return "https://userresearchagent.up.railway.app";
-    } catch(e) { return "https://userresearchagent.up.railway.app"; }
+      return "https://userinsightagent-production.up.railway.app";
+    } catch(e) { return "https://userinsightagent-production.up.railway.app"; }
   }
   let API_BASE = getDefaultApiBase();
   const API_KEY = "admin123";
