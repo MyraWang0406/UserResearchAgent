@@ -177,6 +177,34 @@
     .conflict-history-card ul { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.6; color: var(--text-main); }
     .contact-badge { position: fixed; bottom: 12px; right: 12px; background: #2b2b2b; color: #fff; font-family: "Microsoft YaHei", "微软雅黑", sans-serif; font-size: 11px; padding: 5px 10px; border-radius: 6px; z-index: 9998; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.2); border: 1px solid #333; }
     .contact-badge:hover { background: #1f1f1f; }
+    .a-pro-only { display: block; }
+    .human3-card { background: #fff; border: 1px solid var(--accent-main); border-radius: 12px; padding: 14px; margin-top: 12px; }
+    .human3-card h3 { margin: 0 0 10px; font-size: 14px; color: var(--accent-main); }
+    .human3-card .confirmed-list, .human3-card .gaps-list { font-size: 12px; color: var(--text-sub); margin-bottom: 10px; }
+    .human3-card .gap-item { margin-bottom: 8px; padding: 8px; background: var(--blue-soft); border-radius: 8px; }
+    .human3-card .q-one { margin: 10px 0; padding: 10px; background: var(--silver); border-radius: 8px; }
+    .human3-card .fill-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+    .human3-card .fill-row input { flex: 1; }
+    .b-summary { display: grid; gap: 12px; }
+    .b-card { background: #fff; border: 1px solid var(--silver-border); border-radius: 12px; padding: 14px; }
+    .b-card.tldr { border-left: 4px solid var(--accent-main); }
+    .b-card h4 { margin: 0 0 8px; font-size: 13px; color: var(--accent-main); }
+    .accordion { border: 1px solid var(--silver-border); border-radius: 10px; margin-top: 10px; overflow: hidden; }
+    .accordion-head { padding: 10px 14px; background: var(--silver); cursor: pointer; font-size: 13px; font-weight: 500; }
+    .accordion-body { padding: 12px 14px; background: #fff; font-size: 12px; display: none; }
+    .accordion-body.open { display: block; }
+    .trace-tag { display: inline-block; font-size: 11px; color: var(--accent-text); background: var(--accent-soft); padding: 2px 6px; border-radius: 4px; margin-right: 6px; margin-bottom: 4px; }
+    .timeline-default { margin-bottom: 20px; }
+    .timeline-item { background: #fff; border: 1px solid var(--silver-border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    .timeline-item h4 { margin: 0 0 8px; font-size: 14px; color: var(--accent-main); }
+    .timeline-item-id { font-size: 13px; color: var(--accent-text); font-weight: 600; margin-bottom: 8px; }
+    .timeline-meta { font-size: 12px; color: var(--text-sub); margin-bottom: 8px; }
+    .c-graph-note { background: var(--accent-soft); border-radius: 10px; padding: 10px 14px; font-size: 12px; color: var(--accent-text); margin-bottom: 12px; }
+    .field-hint { display: block; font-size: 12px; margin-top: 4px; min-height: 16px; }
+    .field-hint.block { color: var(--bad); }
+    .field-hint.warn { color: var(--warn); }
+    .field-hint.ok { color: var(--ok); }
+    .b-record-id { background: var(--accent-soft); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--accent-text); margin-bottom: 14px; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -193,9 +221,9 @@
 
 <main>
   <div class="tabs">
-    <div class="tab active" id="tabA" onclick="switchTab('A')">A. B2B Diagnosis (Pre-sales)</div>
-    <div class="tab" id="tabB" onclick="switchTab('B')">B. User Research Delivery (Qual + Quant)</div>
-    <div class="tab" id="tabC" onclick="switchTab('C')">C. Decision Memory (Trace Graph)</div>
+    <div class="tab active" id="tabA" onclick="switchTab('A')">A. 销售输入</div>
+    <div class="tab" id="tabB" onclick="switchTab('B')">B. 生成结果</div>
+    <div class="tab" id="tabC" onclick="switchTab('C')">C. 历史业务判断记录</div>
   </div>
 
   <div id="panelAB" class="grid">
@@ -204,39 +232,50 @@
 
       <div class="row">
         <div>
-          <label id="lblIndustry">Target company business type</label>
+          <label id="lblIndustry">目标公司业务类型</label>
           <select id="industry"></select>
+          <span id="hint_industry" class="field-hint" aria-live="polite"></span>
         </div>
-        <div>
+        <div class="a-pro-only" id="rowMarket">
           <label id="lblMarket">Target Market</label>
           <input id="market" placeholder="e.g. North America / Europe / SEA / Domestic"/>
         </div>
       </div>
 
-      <label id="lblStage">Company Stage</label>
+      <label id="lblStage">公司阶段</label>
       <select id="stage"></select>
+      <span id="hint_stage" class="field-hint" aria-live="polite"></span>
 
-      <label id="lblGrowth">Growth Drivers (multi-select, ordered)</label>
+      <label id="lblGrowth">增长驱动方式（可多选）</label>
       <div id="growthOptions" class="growth-checkboxes"></div>
       <div class="hint" id="hintGrowth">Select one or more (order by priority).</div>
 
-      <label id="lblPositioning">Business Positioning</label>
-      <select id="positioning"></select>
+      <div id="rowPositioning">
+        <label id="lblPositioning">业务定位</label>
+        <select id="positioning"></select>
+      </div>
 
-      <label id="lblGoal">Goal</label>
+      <label id="lblGoal">本次目标</label>
       <select id="goal"></select>
+      <span id="hint_goal" class="field-hint" aria-live="polite"></span>
 
-      <label id="lblBusinessForm">Specific business form</label>
-      <textarea id="businessForm" placeholder="Business form: Through (by what means) for (which users) in (industry/scenario) to solve (what problem). Characteristics are … Historical difficulties … X's comparative advantage (e.g. supply chain / tech / brand / loyal users)."></textarea>
+      <div class="a-pro-only" id="rowBusinessForm">
+        <label id="lblBusinessForm">Specific business form</label>
+        <textarea id="businessForm" placeholder="Business form: Through (by what means) for (which users) in (industry/scenario) to solve (what problem). Characteristics are …"></textarea>
+      </div>
 
-      <label id="lblProblem">Core Problem (with facts/data)</label>
+      <label id="lblComparativeAdvantage">比较优势</label>
+      <select id="comparativeAdvantage"></select>
+
+      <label id="lblProblem">核心问题（尽量含事实/数据）</label>
       <textarea id="problem" placeholder="e.g. CAC up, CTR ok but add-to-cart low; users say 'can't tell difference' — high cart abandonment"></textarea>
+      <span id="hint_problem" class="field-hint" aria-live="polite"></span>
 
-      <label id="lblConstraints">Constraints (optional)</label>
+      <label id="lblConstraints">约束（可选）</label>
       <textarea id="constraints" placeholder="e.g. results in 2 weeks; no minors; no raw audio storage; mid budget"></textarea>
 
-      <button class="btn" onclick="runA()" id="btnRunA">Run A: Diagnose → Research Plan</button>
-      <button class="btn secondary" onclick="runB()" id="runBBtn" disabled>Run B: Interview Guide + Survey Draft</button>
+      <button class="btn" onclick="runA()" id="btnRunA">诊断 → 研究方案</button>
+      <button class="btn secondary" onclick="runB()" id="runBBtn" disabled>生成访谈大纲 + 问卷草案</button>
 
       <div class="hint">
         <span id="hintTemplates">Templates:</span>
@@ -252,8 +291,9 @@
     </section>
 
     <section class="card">
-      <h2 id="outTitle">Output (Actionable Deliverables)</h2>
+      <h2 id="outTitle">生成结果</h2>
       <div class="output" id="out">Waiting for input…</div>
+      <div id="outStructured" class="b-summary" style="display:none;"></div>
       <div style="margin-top:12px;">
         <span class="pill" id="pill1">Evidence-first</span>
         <span class="pill" id="pill2">Actionable + Verifiable</span>
@@ -263,84 +303,10 @@
   </div>
 
   <div id="panelC" class="tab-c-only">
-    <div class="tab-c-grid">
-      <section class="card">
-        <h2 id="tabCOpTitle">Input / Actions</h2>
-        <label id="lblTraceRunIndex">Run #</label>
-        <select id="traceRunIndex" onchange="onTraceRunIndexChange()"><option value="">—</option></select>
-        <label>topic (optional)</label>
-        <input id="traceTopic" placeholder="e.g. fintech"/>
-        <label>stage (optional)</label>
-        <input id="traceStage" placeholder="e.g. 1-10"/>
-        <button class="btn btn-sm" onclick="loadTraceGraph()" id="btnLoadGraph">Load Trace Graph</button>
-        <button class="btn btn-sm secondary" onclick="loadDecisionsSnapshots()" id="btnLoadDec">Load Decisions/Snapshots</button>
-        <button class="btn btn-sm secondary" onclick="openApiDocs()" id="btnApiDocs">Open API Docs</button>
-        <button class="btn btn-sm" style="border:1px solid var(--bad); color:var(--bad); background:#fff;" onclick="trigger400Demo()" id="btn400Demo">Trigger 400 Demo (Missing Citation)</button>
-        <div class="hint" style="margin-top:12px;" id="hintTraceGraph">
-          Trace Graph requires Decision Memory backend (uvicorn backend.api.main:app). API needs X-API-Key: admin123.
-        </div>
-      </section>
-
-      <section class="card">
-        <h2 id="tabCGraphTitle">Trace Graph & Memory Proof</h2>
-        <div class="rules-card">
-          <h3 id="rulesTitle">Decision Enforcement Rules</h3>
-          <div class="rule-item">
-            <span class="rule-icon">⛔</span>
-            <div class="rule-text">
-              <div class="rule-en" id="rule1En">Rule #1 — No Citation, No Decision. Any decision without historical citation is explicitly rejected by the system (HTTP 400).</div>
-              <div class="rule-zh" id="rule1Zh">规则一 — 无援引，不决策。任何未援引历史证据或决策的判断，都会被系统直接拒绝（HTTP 400）。</div>
-            </div>
-          </div>
-          <div class="rule-item">
-            <span class="rule-icon">🔒</span>
-            <div class="rule-text">
-              <div class="rule-en" id="rule2En">Rule #2 — Falsified conclusions cannot be reverted. If a requirement contradicts a previously falsified decision, it will be blocked.</div>
-              <div class="rule-zh" id="rule2Zh">规则二 — 被证伪的结论不可回退。若新需求与已被证伪的历史决策冲突，系统将阻止该需求回退。</div>
-            </div>
-          </div>
-          <div class="rule-item">
-            <span class="rule-icon">📜</span>
-            <div class="rule-text">
-              <div class="rule-en" id="rule3En">Rule #3 — Memory constrains future decisions. Past evidence and falsification actively constrain future decision space.</div>
-              <div class="rule-zh" id="rule3Zh">规则三 — 记忆约束未来决策。历史证据与证伪结论会主动收缩未来可选决策空间。</div>
-            </div>
-          </div>
-          <div class="rules-footer" id="rulesFooter"></div>
-        </div>
-        <div id="graphError" class="err-msg" style="display:none;"></div>
-        <div id="graphWrapper" class="graph-container" style="display:none;"></div>
-        <div id="graphPlaceholder" class="output" style="min-height:200px;">
-          <span id="graphPlaceholderText">Click "Load Trace Graph" to fetch nodes/edges and render.</span>
-        </div>
-        <div class="conflict-history-card" id="conflictHistoryCard">
-          <h4><span id="conflictHistoryTitle">Conflict History</span> <span class="proof-badge" id="conflictHistoryBadge">Memory-constrained</span><button class="conflict-demo-btn" id="btnConflictDemo" onclick="runConflictDemo()" data-i18n="btnConflictDemo">Run Conflict Demo</button></h4>
-          <ul id="conflictHistoryList">
-            <li>Round 2 falsified speed hypothesis</li>
-            <li>Round 3 recall prevented rollback</li>
-          </ul>
-        </div>
-        <div id="nodeDetail" class="node-detail" style="display:none;"></div>
-        <div class="proof-block" style="margin-top:14px;">
-          <div class="line"><strong id="proofRecallLabel">RecallHits Found:</strong> <span id="proofRecall">—</span></div>
-          <div class="line"><strong id="proofConflictLabel">Conflict Reason:</strong> <span id="proofConflict">—</span></div>
-          <div class="line"><strong id="proofRationaleLabel">Final Decision Rationale:</strong> <span id="proofRationale">—</span></div>
-          <div class="hint-text" id="proofHint">If API cannot derive, copy from demo_outputs/demo.log.</div>
-        </div>
-        <div class="ui-event-log" id="uiEventLog">No events yet.</div>
-        <div class="comparison-module">
-          <h3 id="comparisonTitle" style="grid-column:1/-1; margin:0 0 8px; font-size:15px; color:var(--accent-main);">Why this decision requires memory</h3>
-          <div class="comparison-col">
-            <h4 id="comparisonWithTitle">With Memory Recall</h4>
-            <ul id="comparisonWithList"></ul>
-          </div>
-          <div class="comparison-col">
-            <h4 id="comparisonWithoutTitle">Without Memory Recall</h4>
-            <ul id="comparisonWithoutList"></ul>
-          </div>
-          <p id="comparisonNote" class="comparison-note" style="grid-column:1/-1; margin:8px 0 0;"></p>
-        </div>
-      </section>
+    <div class="timeline-default">
+      <h2 id="timelineTitle" style="font-size:18px; color:var(--accent-main); margin:0 0 12px;">历史业务判断记录</h2>
+      <p id="timelineHint" class="hint" style="margin-bottom:14px;">每条记录为一次客户业务判断，仅展示业务标识、输入摘要与输出摘要。</p>
+      <div id="timelineList"></div>
     </div>
   </div>
 </main>
@@ -363,7 +329,7 @@
       pageSubtitle: "B2B pre-sales diagnosis → Research plan routing → Actionable assets + validation metrics (no scraping)",
       tabA: "A. B2B Diagnosis (Pre-sales)",
       tabB: "B. User Research Delivery (Qual + Quant)",
-      tabC: "C. Decision Memory (Trace Graph)",
+      tabC: "C. History (Business Judgment Records)",
       formTitle: "Input (for Agent)",
       formTitleB: "Input (reuse A)",
       lblIndustry: "Target company business type",
@@ -374,6 +340,13 @@
       lblGoal: "Goal",
       lblBusinessForm: "Specific business form",
       lblProblem: "Key problems your business may face recently (include facts/data where possible)",
+      lblComparativeAdvantage: "Comparative advantage",
+      comparativeAdvantageOptions: [
+        { v: "tech_breakthrough", en: "Tech breakthrough, solve user problems efficiently", zh: "技术突破瓶颈高效解决用户问题" },
+        { v: "story_marketing", en: "Strong story, high marketing & acquisition efficiency", zh: "故事好营销获客效率高" },
+        { v: "stable_customers", en: "Stable customer base", zh: "客源稳定" },
+        { v: "stable_supply_perf", en: "Stable supply, high performance & efficiency", zh: "供给稳定高性能高效" }
+      ],
       lblConstraints: "Constraints (optional)",
       hintGrowth: "Use full names, not abbreviations only.",
       btnRunA: "Run A: Diagnose → Research Plan",
@@ -385,6 +358,7 @@
       warnNo8000InProduction: "Do not use :8000 in production. Use your Railway app URL (e.g. https://xxx.up.railway.app).",
       apiBaseHint: "If you see \"Failed to fetch\", click \"Set API address\". Production: your Railway Public URL (e.g. https://xxx.up.railway.app). Local: http://127.0.0.1:8000.",
       outTitle: "Output (Actionable Deliverables)",
+      cardTldrTitle: "Conclusion summary (Too Long; Didn't Read, TL;DR)",
       outWaiting: "Waiting for input…",
       pill1: "Evidence-first",
       pill2: "Actionable + Verifiable",
@@ -393,6 +367,11 @@
       footerPillB: "B: Research",
       footerPillC: "C: Decision Memory",
       tabCOpTitle: "Input / Actions",
+      timelineTitle: "History (Business Judgment Records)",
+      timelineHint: "Each record is one business judgment; only business id, input summary and output summary are shown.",
+      timelineEmpty: "No records yet. Complete diagnosis on A and generate deliverables on B to see them here.",
+      timelineInputLabel: "Input summary",
+      timelineOutputLabel: "Output summary",
       lblTraceRunIndex: "Run #",
       btnLoadGraph: "Load Trace Graph",
       btnLoadDec: "Load Decisions/Snapshots",
@@ -463,36 +442,58 @@
       conflictBullet1: "Round 2 falsified speed hypothesis",
       conflictBullet2: "Round 3 recall prevented rollback",
       industryOptions: [
-        { v: "tob_customization", en: "ToB Customization", zh: "ToB 客制化" },
-        { v: "tob_saas", en: "ToB SaaS", zh: "ToB SaaS" },
+        { v: "ai_saas_agent", en: "To B/b/C AI SaaS Agent", zh: "To B/b/C AI SaaS Agent" },
+        { v: "toc_single", en: "To C Single-sided product (e.g. tools/games)", zh: "To C 单边产品(如工具/游戏)" },
+        { v: "toc_platform", en: "To C Two-sided platform (e.g. e-commerce/matchmaking/content/social)", zh: "To C 双边平台(如电商撮合/内容平台/社交平台)" },
+        { v: "agency", en: "Agency (e.g. MCN / talent agency / influencer incubation)", zh: "Agency (如MCN/达人艺人经纪/网红孵化)" },
         { v: "brand_fmcg", en: "Brand - FMCG", zh: "品牌方-快消" },
         { v: "brand_electronics", en: "Brand - Consumer electronics", zh: "品牌方-消费电子" },
         { v: "brand_durable", en: "Brand - Durable goods", zh: "品牌方-耐消" },
-        { v: "toc_app", en: "ToC App (single-sided product: tools/games)", zh: "ToC App 单边产品（如工具/游戏）" },
-        { v: "toc_platform", en: "ToC Platform (two-sided: e-commerce platform/social media)", zh: "ToC 双边平台（如电商撮合交易平台/内容平台/社交平台）" },
-        { v: "agency", en: "Agency (artist agency / MCN / micro-influencer incubation)", zh: "Agency（如 MCN 达人艺人经纪 / 网红孵化）" }
+        { v: "tob_customization", en: "ToB Customization / on-premise deployment", zh: "ToB 客制化/本地化部署" },
+        { v: "other", en: "Other", zh: "其他" }
       ],
       stageOptions: [
-        { v: "0-1", en: "0-1 (Infrastructure/Demo, validate feasibility)", zh: "0-1（基建/做Demo，尽快验证可行性）" },
-        { v: "1-10", en: "1-10 (Early product, find PMF)", zh: "1-10（已出Demo/早期产品，快速找客户验证商业闭环）" },
-        { v: "10-100", en: "10-100 (Scale growth & efficiency)", zh: "10-100（已跑通交易/收入，需规模化增长与效率提升）" },
-        { v: "mature", en: "Mature (stable, pursue new growth)", zh: "成熟期（交易规模/利润稳定，追求更高效率或新增长点）" },
-        { v: "decline", en: "Decline (incubate new biz, second curve)", zh: "衰颓期（需孵化新业务，探索业务增长的第二曲线）" }
+        { v: "0-1", en: "0-1 (Infrastructure/Demo, validate feasibility quickly)", zh: "0-1（基建/做 Demo，尽快验证可行性）" },
+        { v: "1-10", en: "1-10 (Demo ready, validate PMF with customers)", zh: "1-10（已做好 Demo，待找客户验证 PMF）" },
+        { v: "10-100", en: "10-100 (Revenue path proven, scale growth and efficiency)", zh: "10-100（已跑通交易/收入，需规模化增长与效率提升）" },
+        { v: "mature", en: "Mature (stable revenue/profit, pursue efficiency or new growth)", zh: "成熟期（交易规模/利润稳定，追求更高效率或新增长点）" },
+        { v: "decline", en: "Decline (incubate new business, explore second growth curve)", zh: "衰颓期（需孵化新业务，探索业务增长的第二曲线）" }
       ],
       positioningOptions: [
-        { v: "new_biz", en: "New incubation: direction unclear, explore users & scenarios", zh: "新孵化/新业务：方向未完全清晰，需要探索用户与场景" },
-        { v: "old_growth", en: "Old biz growth: new approach uncertain", zh: "旧业务新增长：服务于老业务增长，但新方式效果不确定" },
-        { v: "old_supply", en: "Mature supply, find new users & expression", zh: "旧供给找新用户：供给相对成熟，需要找到新目标人群与新表达" },
-        { v: "validated", en: "Proven value: supply-demand fit confirmed, room for efficiency gains; break down by scenario and go deep on problem areas", zh: "已论证价值：已确认供需匹配成立，效率有优化空间，需精细化拆场景定位问题深耕" },
-        { v: "new_market", en: "Existing users, new supply/market: discover unmet needs of existing users, expand supply chain or build/optimize new marketplace", zh: "旧用户新供给/新交易场：发现历史用户有别的需求待满足，为此拓展供应链/搭建优化新交易场" }
+        {
+          v: "new_biz",
+          en: "New incubation business: direction not yet validated; clarify target users and core scenarios",
+          zh: "新孵化业务：方向未验证，需要明确目标用户与核心场景"
+        },
+        {
+          v: "former_supply_need_new_growth",
+          en: "Existing business needs new growth: core business stable, but incremental growth path not yet validated",
+          zh: "旧业务新增长：老业务稳定，但新增量路径尚未跑通"
+        },
+        {
+          v: "old_supply_need_new_customer",
+          en: "Mature supply, find new customer segments: adjust positioning and value communication",
+          zh: "旧供给找新人群：供给相对成熟，需要调整表达方式，探索新目标人群"
+        },
+        {
+          v: "validated_need_better",
+          en: "Validated value: supply–demand fit exists; need to optimize efficiency and conversion structure",
+          zh: "已验证价值：供需匹配成立，效率与转化结构待优化"
+        },
+        {
+          v: "former_customer_new_transaction_place",
+          en: "Existing customers, new transaction scenarios: extend user needs and build new marketplaces",
+          zh: "旧用户新交易场：现有用户有延展需求，可构建新交易场景"
+        }
       ],
       goalOptions: [
-        { v: "first_order", en: "Increase first-order conversion", zh: "提升首单购买转化率" },
-        { v: "repurchase", en: "Increase repurchase conversion", zh: "提升复购转化率" },
-        { v: "refund", en: "Reduce refund/return rate", zh: "降低退款/退货率" },
+        { v: "buzz_discussion", en: "Increase product/brand positive buzz and discussion", zh: "提升产品/品牌正面热度/讨论度" },
+        { v: "more_inquiries", en: "Quickly get more potential lead inquiries", zh: "快速获取更多潜在意向用户询单" },
         { v: "lead_close", en: "Lead → close conversion", zh: "提升线索→成交转化率" },
         { v: "leads_hva", en: "Increase total High Value Action (HVA) count", zh: "提升高价值行为(HVA)总数" },
-        { v: "more_inquiries", en: "Quickly get more potential lead inquiries", zh: "快速获取更多潜在意向用户询单" }
+        { v: "first_order", en: "Increase first-order purchase conversion", zh: "提升首单购买转化率" },
+        { v: "repurchase", en: "Increase renewal / repurchase conversion", zh: "提升续费/复购转化率" },
+        { v: "refund", en: "Reduce refund/return rate", zh: "降低退款/退货率" }
       ],
       growthOptions: [
         { v: "mlg", en: "Marketing-Led Growth (MLG)", zh: "营销驱动增长(MLG)" },
@@ -503,8 +504,8 @@
       ],
       hintGrowth: "Select one or more (order by priority).",
       marketPlaceholder: "e.g. North America / Europe / SEA / Domestic",
-      businessFormPlaceholder: "Business form: Through (by what means) for (which users) in (industry/scenario) to solve (what problem). Characteristics are … Historical difficulties … X's comparative advantage (e.g. supply chain / tech / brand / loyal users).",
-      problemPlaceholder: "e.g. CAC up, CTR ok but add-to-cart low; users say 'can't tell difference' — high cart abandonment",
+      businessFormPlaceholder: "Business form: Through (by what means) for (which users) in (industry/scenario) to solve (what problem). Characteristics are …",
+      problemPlaceholder: "e.g. Historical difficulties / current pain: CAC up, CTR ok but add-to-cart low; users say 'can't tell difference' — high cart abandonment",
       constraintsPlaceholder: "e.g. results in 2 weeks; no minors; no raw audio storage; mid budget",
       traceTopicPlaceholder: "e.g. fintech",
       traceStagePlaceholder: "e.g. 1-10",
@@ -515,7 +516,7 @@
       pageSubtitle: "B端售前诊断 → 研究方案路由 → 可执行资产 + 验证口径（不依赖爬虫）",
       tabA: "A. B端客户诊断（售前/立项）",
       tabB: "B. 用户研究交付（定性+定量）",
-      tabC: "C. Decision Memory 可视化（Trace Graph）",
+      tabC: "C. 历史业务判断记录",
       formTitle: "输入（给Agent）",
       formTitleB: "输入（沿用A段信息）",
       lblIndustry: "目标公司业务类型",
@@ -526,6 +527,13 @@
       lblGoal: "本次目标",
       lblBusinessForm: "具体业务形态",
       lblProblem: "最近业务发展可能面临的核心问题（尽量包含事实/数据）",
+      lblComparativeAdvantage: "比较优势",
+      comparativeAdvantageOptions: [
+        { v: "tech_breakthrough", en: "Tech breakthrough, solve user problems efficiently", zh: "技术突破瓶颈高效解决用户问题" },
+        { v: "story_marketing", en: "Strong story, high marketing & acquisition efficiency", zh: "故事好营销获客效率高" },
+        { v: "stable_customers", en: "Stable customer base", zh: "客源稳定" },
+        { v: "stable_supply_perf", en: "Stable supply, high performance & efficiency", zh: "供给稳定高性能高效" }
+      ],
       lblConstraints: "约束（可选）",
       hintGrowth: "不要只写缩写。请勾选一项或多项（按主次排序）。",
       btnRunA: "运行 A：诊断 → 研究方案",
@@ -537,6 +545,7 @@
       warnNo8000InProduction: "生产环境不能填 :8000，请填 Railway 应用 Public URL（如 https://xxx.up.railway.app）。",
       apiBaseHint: "若出现「Failed to fetch」，请点击「设置API地址」。生产环境填 Railway 的 Public URL（如 https://xxx.up.railway.app）；本机填 http://127.0.0.1:8000。",
       outTitle: "输出（可执行交付物）",
+      cardTldrTitle: "结论摘要",
       outWaiting: "等待输入…",
       pill1: "证据优先",
       pill2: "可执行 + 可验证",
@@ -545,6 +554,11 @@
       footerPillB: "B: 研究",
       footerPillC: "C: Decision Memory",
       tabCOpTitle: "输入 / 操作",
+      timelineTitle: "历史业务判断记录",
+      timelineHint: "每条记录为一次客户业务判断，仅展示业务标识、输入摘要与输出摘要。",
+      timelineEmpty: "暂无业务判断记录。请在 A 页完成诊断、B 页生成交付物后，此处将显示记录。",
+      timelineInputLabel: "输入摘要",
+      timelineOutputLabel: "输出摘要",
       lblTraceRunIndex: "序号",
       btnLoadGraph: "加载 Trace Graph",
       btnLoadDec: "加载最新 Decisions/Snapshots",
@@ -615,36 +629,58 @@
       conflictBullet1: "Round 2 证伪速度假设",
       conflictBullet2: "Round 3 回溯阻止回退",
       industryOptions: [
-        { v: "tob_customization", en: "ToB Customization", zh: "ToB 客制化" },
-        { v: "tob_saas", en: "ToB SaaS", zh: "ToB SaaS" },
+        { v: "ai_saas_agent", en: "To B/b/C AI SaaS Agent", zh: "To B/b/C AI SaaS Agent" },
+        { v: "toc_single", en: "To C Single-sided product (e.g. tools/games)", zh: "To C 单边产品(如工具/游戏)" },
+        { v: "toc_platform", en: "To C Two-sided platform (e.g. e-commerce/matchmaking/content/social)", zh: "To C 双边平台(如电商撮合/内容平台/社交平台)" },
+        { v: "agency", en: "Agency (e.g. MCN / talent agency / influencer incubation)", zh: "Agency (如MCN/达人艺人经纪/网红孵化)" },
         { v: "brand_fmcg", en: "Brand - FMCG", zh: "品牌方-快消" },
         { v: "brand_electronics", en: "Brand - Consumer electronics", zh: "品牌方-消费电子" },
         { v: "brand_durable", en: "Brand - Durable goods", zh: "品牌方-耐消" },
-        { v: "toc_single", en: "ToC Single-sided App (e.g., tools/games)", zh: "ToC 单边产品（如工具/游戏）" },
-        { v: "toc_platform", en: "ToC Two-sided Platform (e.g., e-commerce platform/social media)", zh: "ToC 双边平台（如电商撮合/内容平台/社交平台）" },
-        { v: "agency", en: "Agency (e.g., artist agency / MCN / micro-influencer incubation)", zh: "Agency（如MCN/达人艺人经纪/网红孵化）" }
+        { v: "tob_customization", en: "ToB Customization / on-premise deployment", zh: "ToB 客制化/本地化部署" },
+        { v: "other", en: "Other", zh: "其他" }
       ],
       stageOptions: [
-        { v: "0-1", en: "0-1 (Infrastructure/Demo, validate feasibility)", zh: "0-1（基建/做Demo，尽快验证可行性）" },
-        { v: "1-10", en: "1-10 (Early product, find PMF)", zh: "1-10（已出Demo/早期产品，快速找客户验证商业闭环）" },
-        { v: "10-100", en: "10-100 (Scale growth & efficiency)", zh: "10-100（已跑通交易/收入，需规模化增长与效率提升）" },
-        { v: "mature", en: "Mature (stable, pursue new growth)", zh: "成熟期（交易规模/利润稳定，追求更高效率或新增长点）" },
-        { v: "decline", en: "Decline (incubate new biz, second curve)", zh: "衰颓期（需孵化新业务，探索业务增长的第二曲线）" }
+        { v: "0-1", en: "0-1 (Infrastructure/Demo, validate feasibility quickly)", zh: "0-1（基建/做 Demo，尽快验证可行性）" },
+        { v: "1-10", en: "1-10 (Demo ready, validate PMF with customers)", zh: "1-10（已做好 Demo，待找客户验证 PMF）" },
+        { v: "10-100", en: "10-100 (Revenue path proven, scale growth and efficiency)", zh: "10-100（已跑通交易/收入，需规模化增长与效率提升）" },
+        { v: "mature", en: "Mature (stable revenue/profit, pursue efficiency or new growth)", zh: "成熟期（交易规模/利润稳定，追求更高效率或新增长点）" },
+        { v: "decline", en: "Decline (incubate new business, explore second growth curve)", zh: "衰颓期（需孵化新业务，探索业务增长的第二曲线）" }
       ],
       positioningOptions: [
-        { v: "new_biz", en: "New incubation: direction unclear, explore users & scenarios", zh: "新孵化/新业务：方向未完全清晰，需要探索用户与场景" },
-        { v: "old_growth", en: "Old biz growth: new approach uncertain", zh: "旧业务新增长：服务于老业务增长，但新方式效果不确定" },
-        { v: "old_supply", en: "Mature supply, find new users & expression", zh: "旧供给找新用户：供给相对成熟，需要找到新目标人群与新表达" },
-        { v: "validated", en: "Proven value: supply-demand fit confirmed, room for efficiency gains; break down by scenario and go deep on problem areas", zh: "已论证价值：已确认供需匹配成立，效率有优化空间，需精细化拆场景定位问题深耕" },
-        { v: "new_market", en: "Existing users, new supply/market: discover unmet needs of existing users, expand supply chain or build/optimize new marketplace", zh: "旧用户新供给/新交易场：发现历史用户有别的需求待满足，为此拓展供应链/搭建优化新交易场" }
+        {
+          v: "new_biz",
+          en: "New incubation business: direction not yet validated; clarify target users and core scenarios",
+          zh: "新孵化业务：方向未验证，需要明确目标用户与核心场景"
+        },
+        {
+          v: "former_supply_need_new_growth",
+          en: "Existing business needs new growth: core business stable, but incremental growth path not yet validated",
+          zh: "旧业务新增长：老业务稳定，但新增量路径尚未跑通"
+        },
+        {
+          v: "old_supply_need_new_customer",
+          en: "Mature supply, find new customer segments: adjust positioning and value communication",
+          zh: "旧供给找新人群：供给相对成熟，需要调整表达方式，探索新目标人群"
+        },
+        {
+          v: "validated_need_better",
+          en: "Validated value: supply–demand fit exists; need to optimize efficiency and conversion structure",
+          zh: "已验证价值：供需匹配成立，效率与转化结构待优化"
+        },
+        {
+          v: "former_customer_new_transaction_place",
+          en: "Existing customers, new transaction scenarios: extend user needs and build new marketplaces",
+          zh: "旧用户新交易场：现有用户有延展需求，可构建新交易场景"
+        }
       ],
       goalOptions: [
-        { v: "first_order", en: "Increase first-order conversion", zh: "提升首单购买转化率" },
-        { v: "repurchase", en: "Increase repurchase conversion", zh: "提升复购转化率" },
-        { v: "refund", en: "Reduce refund/return rate", zh: "降低退款/退货率" },
+        { v: "buzz_discussion", en: "Increase product/brand positive buzz and discussion", zh: "提升产品/品牌正面热度/讨论度" },
+        { v: "more_inquiries", en: "Quickly get more potential lead inquiries", zh: "快速获取更多潜在意向用户询单" },
         { v: "lead_close", en: "Lead → close conversion", zh: "提升线索→成交转化率" },
         { v: "leads_hva", en: "Increase total High Value Action (HVA) count", zh: "提升高价值行为(HVA)总数" },
-        { v: "more_inquiries", en: "Quickly get more potential lead inquiries", zh: "快速获取更多潜在意向用户询单" }
+        { v: "first_order", en: "Increase first-order purchase conversion", zh: "提升首单购买转化率" },
+        { v: "repurchase", en: "Increase renewal / repurchase conversion", zh: "提升续费/复购转化率" },
+        { v: "refund", en: "Reduce refund/return rate", zh: "降低退款/退货率" }
       ],
       growthOptions: [
         { v: "mlg", en: "Marketing-Led Growth (MLG)", zh: "营销驱动增长(MLG)" },
@@ -656,8 +692,8 @@
       hintGrowth: "不要只写缩写。请勾选一项或多项（按主次排序）。",
       marketPlaceholder: "例如：北美 / 欧洲 / 东南亚 / 国内",
       growthPlaceholder: "例如：营销驱动增长（Marketing-Led Growth, MLG）\n产品驱动增长（Product-Led Growth, PLG）",
-      businessFormPlaceholder: "具体业务形态为：通过（以……什么方式）为……（什么用户）在……（行业/场景）解决……（问题），这些（行业/场景/用户）特征是……历史难点在于……，X在这里的比较优势是……（供应链降生产成本/技术突破/品牌宣推效率高/既有忠实用户）",
-      problemPlaceholder: "例如：买量成本上升，点击不差但加购率低；用户经常说'看不懂差别/不敢买'，弃购率高。",
+      businessFormPlaceholder: "具体业务形态为:通过(以.....什么方式)为......(什么用户)在.....(行业/场景)解决...(问题)，这些(行业/场景/用户)特征是....",
+      problemPlaceholder: "例如，历史难点/当下痛点在于：买量成本上升，点击不差但加购率低;用户经常说'看不懂差别/不敢买'，弃购率高。",
       constraintsPlaceholder: "例如：两周内要出结果；不能触达未成年人；不能存储原始音频；预算中等。",
       traceTopicPlaceholder: "例如：fintech",
       traceStagePlaceholder: "例如：1-10",
@@ -701,8 +737,9 @@
 
   function applyLang() {
     const t = I18N[LANG];
-    document.getElementById("pageTitle").textContent = t.pageTitle;
-    document.getElementById("pageSubtitle").textContent = t.pageSubtitle;
+    const fallback = I18N.en;
+    document.getElementById("pageTitle").textContent = t.pageTitle != null ? t.pageTitle : fallback.pageTitle;
+    document.getElementById("pageSubtitle").textContent = t.pageSubtitle != null ? t.pageSubtitle : fallback.pageSubtitle;
     document.getElementById("tabA").textContent = t.tabA;
     document.getElementById("tabB").textContent = t.tabB;
     document.getElementById("tabC").textContent = t.tabC;
@@ -717,6 +754,7 @@
     const stageSel = document.getElementById("stage");
     const stageOpts = t.stageOptions || [];
     stageSel.innerHTML = stageOpts.map(o => `<option value="${o.v}">${o[LANG] || o.en}</option>`).join("");
+    if (stageSel.options.length) stageSel.value = "1-10";
     document.getElementById("lblGrowth").textContent = t.lblGrowth;
     const growthContainer = document.getElementById("growthOptions");
     const growthOpts = t.growthOptions || [];
@@ -727,14 +765,22 @@
     const posSel = document.getElementById("positioning");
     const posOpts = t.positioningOptions || [];
     posSel.innerHTML = posOpts.map(o => `<option value="${o.v}">${o[LANG] || o.en}</option>`).join("");
+    // 默认选：旧供给找新人群
+    if (posSel.options.length) posSel.value = "old_supply_need_new_customer";
     document.getElementById("lblGoal").textContent = t.lblGoal;
     const goalSel = document.getElementById("goal");
     const goalOpts = t.goalOptions || [];
     goalSel.innerHTML = goalOpts.map(o => `<option value="${o.v}">${o[LANG] || o.en}</option>`).join("");
+    if (goalSel.options.length) goalSel.value = "more_inquiries";
     document.getElementById("lblBusinessForm").textContent = t.lblBusinessForm || "";
     document.getElementById("businessForm").placeholder = t.businessFormPlaceholder || "";
     document.getElementById("lblProblem").textContent = t.lblProblem;
     document.getElementById("problem").placeholder = t.problemPlaceholder || "";
+    document.getElementById("lblComparativeAdvantage").textContent = t.lblComparativeAdvantage != null ? t.lblComparativeAdvantage : (I18N.en.lblComparativeAdvantage || "");
+    const compSel = document.getElementById("comparativeAdvantage");
+    const compOpts = t.comparativeAdvantageOptions || I18N.en.comparativeAdvantageOptions || [];
+    compSel.innerHTML = compOpts.map(o => `<option value="${o.v}">${o[LANG] || o.en}</option>`).join("");
+    if (compSel.options.length) compSel.value = "stable_supply_perf";
     document.getElementById("lblConstraints").textContent = t.lblConstraints;
     document.getElementById("constraints").placeholder = t.constraintsPlaceholder || "";
     document.getElementById("hintGrowth").textContent = t.hintGrowth;
@@ -752,46 +798,13 @@
     const fpB = document.getElementById("footerPillB"); if (fpB) fpB.textContent = t.footerPillB;
     const fpC = document.getElementById("footerPillC"); if (fpC) fpC.textContent = t.footerPillC;
     const contactBadgeEl = document.getElementById("contactBadge"); if (contactBadgeEl) contactBadgeEl.textContent = t.contactBadge;
-    document.getElementById("tabCOpTitle").textContent = t.tabCOpTitle;
-    const lblRun = document.getElementById("lblTraceRunIndex"); if (lblRun) lblRun.textContent = t.lblTraceRunIndex || "Run #";
-    updateTraceRunIndexSelect();
-    document.getElementById("btnLoadGraph").textContent = t.btnLoadGraph;
-    document.getElementById("btnLoadDec").textContent = t.btnLoadDec;
-    document.getElementById("btnApiDocs").textContent = t.btnApiDocs;
-    document.getElementById("hintTraceGraph").textContent = t.hintTraceGraph;
-    document.getElementById("traceTopic").placeholder = t.traceTopicPlaceholder || "";
-    document.getElementById("traceStage").placeholder = t.traceStagePlaceholder || "";
-    document.getElementById("tabCGraphTitle").textContent = t.tabCGraphTitle;
-    document.getElementById("graphPlaceholderText").textContent = t.graphPlaceholderText;
-    document.getElementById("proofRecallLabel").textContent = t.proofRecallLabel;
-    document.getElementById("proofConflictLabel").textContent = t.proofConflictLabel;
-    document.getElementById("proofRationaleLabel").textContent = t.proofRationaleLabel;
-    document.getElementById("proofHint").textContent = t.proofHint;
     document.getElementById("footerNote").textContent = t.footerNote;
-    document.getElementById("comparisonTitle").textContent = t.comparisonTitle;
-    document.getElementById("comparisonWithTitle").textContent = t.comparisonWithTitle;
-    document.getElementById("comparisonWithoutTitle").textContent = t.comparisonWithoutTitle;
-    document.getElementById("comparisonNote").textContent = t.comparisonNote;
-    document.getElementById("rulesTitle").textContent = t.rulesTitle;
-    document.getElementById("rulesFooter").textContent = t.rulesFooter;
-    document.querySelectorAll(".rule-en").forEach(el => { el.classList.toggle("off", LANG !== "en"); });
-    document.querySelectorAll(".rule-zh").forEach(el => { el.classList.toggle("off", LANG !== "zh"); });
-    document.getElementById("btn400Demo").textContent = t.btn400Demo;
-    const btnConflictDemo = document.getElementById("btnConflictDemo");
-    if (btnConflictDemo && !btnConflictDemo.disabled) btnConflictDemo.textContent = t.btnConflictDemo;
-    document.getElementById("conflictHistoryTitle").textContent = t.conflictHistoryTitle;
-    document.getElementById("conflictHistoryBadge").textContent = t.conflictHistoryBadge;
-    if (lastTraceGraphData) renderConflictHistory(lastTraceGraphData, null);
-    if (document.getElementById("uiEventLog").textContent === "No events yet." || document.getElementById("uiEventLog").textContent === "暂无事件。") {
-      document.getElementById("uiEventLog").textContent = t.uiLogEmpty;
-    }
-    const withList = document.getElementById("comparisonWithList");
-    withList.innerHTML = (t.comparisonWithItems || []).map(s => `<li>${s}</li>`).join("");
-    const withoutList = document.getElementById("comparisonWithoutList");
-    withoutList.innerHTML = (t.comparisonWithoutItems || []).map(s => `<li>${s}</li>`).join("");
+    const timelineTitleEl = document.getElementById("timelineTitle"); if (timelineTitleEl) timelineTitleEl.textContent = t.timelineTitle || "";
+    const timelineHintEl = document.getElementById("timelineHint"); if (timelineHintEl) timelineHintEl.textContent = t.timelineHint || "";
     if (document.getElementById("out").textContent === "Waiting for input…" || document.getElementById("out").textContent === "等待输入…") {
       document.getElementById("out").textContent = t.outWaiting;
     }
+    if (TAB === 'C') renderTimeline();
   }
 
   document.getElementById("apiBaseShow").innerText = API_BASE;
@@ -806,6 +819,48 @@
     document.getElementById("panelC").classList.toggle("visible", t==='C');
     const t2 = I18N[LANG];
     document.getElementById("formTitle").textContent = (t==='A') ? t2.formTitle : (t==='B') ? t2.formTitleB : t2.formTitle;
+    const out = document.getElementById('out');
+    const outStructured = document.getElementById('outStructured');
+    if (t === 'A') { if (out) out.style.display = 'block'; if (outStructured) outStructured.style.display = 'none'; }
+    if (t === 'B' && outStructured && outStructured.innerHTML.trim()) { if (out) out.style.display = 'none'; outStructured.style.display = 'grid'; }
+    if (t === 'C') renderTimeline();
+  }
+  function getBusinessRecordId(payload, seq){
+    const t = I18N[LANG];
+    const stageOpts = t.stageOptions || [];
+    const goalOpts = t.goalOptions || [];
+    const stageD = stageOpts.find(o => o.v === (payload.company_stage || ''));
+    const stageDisplay = stageD ? (stageD[LANG] || stageD.en) : (payload.company_stage || '');
+    const goalD = goalOpts.find(o => o.v === (payload.target_goal || ''));
+    const goalDisplay = goalD ? (goalD[LANG] || goalD.en) : (payload.target_goal || '');
+    const growthSummary = (payload.growth_driver || []).length ? (payload.growth_driver || []).join('、') : (LANG === 'zh' ? '未选' : 'N/A');
+    const dt = new Date();
+    const dateStr = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0') + ' ' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+    return (payload.industry || '') + ' ｜ ' + stageDisplay + ' ｜ ' + growthSummary + ' ｜ ' + goalDisplay + ' ' + dateStr + ' ｜ #' + String(seq).padStart(2,'0');
+  }
+  const BLOCKING_FIELDS = ['goal','problem','industry','stage'];
+  function clearFieldHints(){
+    ['industry','stage','goal','problem'].forEach(f => { const el = document.getElementById('hint_'+f); if (el) { el.textContent = ''; el.className = 'field-hint'; } });
+  }
+  function applyFieldHintsFromHuman3(data){
+    clearFieldHints();
+    const confirmed = (data.confirmed || []).map(c => c.source_field);
+    const gaps = (data.gaps || []);
+    gaps.forEach(g => {
+      const f = g.fill_field;
+      const el = document.getElementById('hint_'+f);
+      if (!el) return;
+      const isBlocking = BLOCKING_FIELDS.indexOf(f) !== -1;
+      el.textContent = (isBlocking ? '❗ 必须补充：' : '⚠️ 建议补充：') + (g.fix_hint || g.gap || '');
+      el.className = 'field-hint ' + (isBlocking ? 'block' : 'warn');
+    });
+    confirmed.forEach(f => {
+      const el = document.getElementById('hint_'+f);
+      if (el && !el.textContent) { el.textContent = '✅ 信息确认'; el.className = 'field-hint ok'; }
+    });
+  }
+  function hasBlockingGaps(data){
+    return (data.gaps || []).some(g => BLOCKING_FIELDS.indexOf(g.fill_field) !== -1);
   }
 
   function isLocalHost(){
@@ -843,6 +898,7 @@
       biz_positioning: document.getElementById('positioning').value,
       business_form: document.getElementById('businessForm').value || "",
       core_problem: document.getElementById('problem').value,
+      comparative_advantage: (()=>{ const s=document.getElementById('comparativeAdvantage'); return s.value ? (s.options[s.selectedIndex]?.text || s.value) : ""; })(),
       constraints: document.getElementById('constraints').value,
       target_goal: document.getElementById('goal').value
     };
@@ -866,7 +922,20 @@
   async function runA(){
     const payload = readInput();
     const out = document.getElementById('out');
+    const outStructured = document.getElementById('outStructured');
+    outStructured.style.display = 'none';
     const t = I18N[LANG];
+    out.style.display = 'block';
+    try {
+      const checkData = await post("/api/human3_check", payload);
+      applyFieldHintsFromHuman3(checkData);
+      if (hasBlockingGaps(checkData)) {
+        out.innerText = (LANG === 'zh' ? '请先补充上方标记为「必须补充」的字段后再生成。' : 'Please fill in the required fields marked above before generating.');
+        return;
+      }
+    } catch(e) {
+      clearFieldHints();
+    }
     out.innerText = t.runAProgress;
     try{
       const diag = await post("/api/diagnose", payload);
@@ -874,8 +943,14 @@
       const plan = await post("/api/research_plan", { diagnose: diag, timeline: "2-4周", budget_level: "中" });
 
       runIndex++;
-      const topicTag = "run_" + runIndex;
-      runHistory.push({ index: runIndex, type: "A", topic: topicTag, payload: payload });
+      const businessRecordId = getBusinessRecordId(payload, runIndex);
+      const inputSummary = (LANG === 'zh') ? '类型 ' + (payload.industry || '') + ' / 阶段 ' + (payload.company_stage || '') + ' / 目标 ' + (payload.target_goal || '') : 'Type ' + (payload.industry || '') + ' / Stage ' + (payload.company_stage || '') + ' / Goal ' + (payload.target_goal || '');
+      runHistory.push({
+        index: runIndex, type: 'A', businessRecordId: businessRecordId, payload: payload,
+        timestamp: new Date().toISOString(),
+        input_summary: inputSummary,
+        output_summary: (LANG === 'zh' ? '诊断完成，可点击「生成访谈大纲+问卷草案」' : 'Diagnosis done. Click to generate interview guide + survey draft.')
+      });
 
       let txt = "";
       if (LANG === 'zh') {
@@ -926,7 +1001,7 @@
 
       out.innerText = txt;
       document.getElementById("runBBtn").disabled = false;
-      updateTraceRunIndexSelect();
+      renderTimeline();
       switchTab('A');
     }catch(e){
       out.innerText = t.errBackend.replace("{msg}", e.message);
@@ -941,101 +1016,125 @@
     }
     const payload = readInput();
     const out = document.getElementById('out');
+    const outStructured = document.getElementById('outStructured');
     const t = I18N[LANG];
-    out.innerText = t.runBProgress;
-    try{
-      const b2b = await post("/api/b2b_questions", payload);
-      const qual = await post("/api/qual_guide", payload);
-      const quant = await post("/api/quant_survey", payload);
-
-      runIndex++;
-      const topicTag = "run_" + runIndex;
-      runHistory.push({ index: runIndex, type: "B", topic: topicTag, payload: payload });
-
-      let txt = "";
-      if (LANG === 'zh') {
-        txt += "【#" + runIndex + "】\n";
-        txt += "【B段：可直接交付的研究资产（草案）】\n\n";
-        txt += "1) 售前提问清单（给销售/售前）\n";
-        (b2b.questions||[]).forEach((q)=>{ txt += `- [${q.section}] ${q.q}\n`; });
-        txt += "\n2) 45分钟定性访谈大纲（半结构化）\n";
-        txt += `- 时长：${qual.qual_guide.duration_minutes}分钟\n`;
-        txt += "- 原则：\n";
-        (qual.qual_guide.principles||[]).forEach(p=> txt += `  · ${p}\n`);
-        txt += "\n- 结构：\n";
-        (qual.qual_guide.sections||[]).forEach(sec=>{
-          txt += `  · ${sec.t}\n`;
-          (sec.prompts||[]).forEach(p=> txt += `     - ${p}\n`);
-        });
-        txt += "\n3) 定量问卷草案（模块化）\n";
-        (quant.quant_survey.modules||[]).forEach(mod=>{
-          txt += `- 模块：${mod.name}\n`;
-          if(mod.note) txt += `  说明：${mod.note}\n`;
-          (mod.questions||[]).forEach(q=>{ txt += `  · ${q.id}（${q.type}）${q.q}\n`; });
-        });
-        txt += "\n4) 数据质量与清洗规则\n";
-        const dq = quant.quant_survey.data_quality || {};
-        txt += `- 速度异常规则：${dq.speeding_rule || "—"}\n`;
-        txt += `- 直线作答规则：${dq.straightlining_rule || "—"}\n`;
-        txt += `- 矛盾检测规则：${dq.contradiction_rule || "—"}\n`;
-        (dq.attention_checks||[]).forEach(x=> txt += `- 注意力题：${x}\n`);
-        txt += "\n5) 只读数据查询模板\n";
-      } else {
-        txt += "【#" + runIndex + "】\n";
-        txt += "【B: Actionable Research Assets (Draft)】\n\n";
-        txt += "1) Pre-sales Question List\n";
-        (b2b.questions||[]).forEach((q)=>{ txt += `- [${q.section}] ${q.q}\n`; });
-        txt += "\n2) 45-min Qualitative Interview Guide\n";
-        txt += `- Duration: ${qual.qual_guide.duration_minutes} min\n`;
-        txt += "- Principles:\n";
-        (qual.qual_guide.principles||[]).forEach(p=> txt += `  · ${p}\n`);
-        txt += "\n- Structure:\n";
-        (qual.qual_guide.sections||[]).forEach(sec=>{
-          txt += `  · ${sec.t}\n`;
-          (sec.prompts||[]).forEach(p=> txt += `     - ${p}\n`);
-        });
-        txt += "\n3) Quantitative Survey Draft (Modular)\n";
-        (quant.quant_survey.modules||[]).forEach(mod=>{
-          txt += `- Module: ${mod.name}\n`;
-          if(mod.note) txt += `  Note: ${mod.note}\n`;
-          (mod.questions||[]).forEach(q=>{ txt += `  · ${q.id} (${q.type}) ${q.q}\n`; });
-        });
-        txt += "\n4) Data Quality & Cleaning Rules\n";
-        const dq = quant.quant_survey.data_quality || {};
-        txt += `- Speeding: ${dq.speeding_rule || "—"}\n`;
-        txt += `- Straightlining: ${dq.straightlining_rule || "—"}\n`;
-        txt += `- Contradiction: ${dq.contradiction_rule || "—"}\n`;
-        (dq.attention_checks||[]).forEach(x=> txt += `- Attention: ${x}\n`);
-        txt += "\n5) Read-only Query Templates\n";
+    try {
+      const checkData = await post("/api/human3_check", payload);
+      applyFieldHintsFromHuman3(checkData);
+      if (hasBlockingGaps(checkData)) {
+        out.style.display = 'block';
+        out.innerText = (LANG === 'zh' ? '请先补充上方标记为「必须补充」的字段后再生成。' : 'Please fill in the required fields marked above before generating.');
+        return;
       }
-      const sql = await fetch(`${API_BASE}/api/sql_templates`).then(r=>r.json());
-      (sql.templates||[]).forEach(tm=>{ txt += `- ${tm.name}: ${tm.description}\n`; });
+    } catch(e) {
+      clearFieldHints();
+    }
+    out.innerText = t.runBProgress;
+    outStructured.style.display = 'none';
+    try{
+      const data = await post("/api/run_b", { ...payload, run_index: runIndex });
 
-      out.innerText = txt;
-      updateTraceRunIndexSelect();
+      const businessRecordId = getBusinessRecordId(payload, runIndex);
+      const inputSummary = (LANG === 'zh') ? '类型 ' + (payload.industry || '') + ' / 阶段 ' + (payload.company_stage || '') + ' / 目标 ' + (payload.target_goal || '') : 'Type ' + (payload.industry || '') + ' / Stage ' + (payload.company_stage || '') + ' / Goal ' + (payload.target_goal || '');
+      const outSummary = (data.tldr || '').slice(0,120) + (data.insights && data.insights.length ? '；' + data.insights.map(i => i.title).join('、') : '') + (data.actions && data.actions.length ? '；' + data.actions.map(a => a.do).join('、') : '');
+      const last = runHistory[runHistory.length - 1];
+      if (runHistory.length > 0 && last && last.type === 'A') {
+        runHistory[runHistory.length - 1] = {
+          index: runIndex, type: 'B', businessRecordId: businessRecordId, payload: payload,
+          timestamp: new Date().toISOString(),
+          input_summary: last.input_summary,
+          output_summary: outSummary,
+          tldr: data.tldr, insights: data.insights, actions: data.actions,
+          deliverables: data.deliverables, trace: data.trace
+        };
+      } else {
+        runHistory.push({
+          index: runIndex, type: 'B', businessRecordId: businessRecordId, payload: payload,
+          timestamp: new Date().toISOString(),
+          input_summary: inputSummary,
+          output_summary: outSummary,
+          tldr: data.tldr, insights: data.insights, actions: data.actions,
+          deliverables: data.deliverables, trace: data.trace
+        });
+      }
+
+      renderBProductized(data, businessRecordId);
+      out.style.display = 'none';
+      outStructured.style.display = 'grid';
+      renderTimeline();
       switchTab('B');
     }catch(e){
+      out.style.display = 'block';
       out.innerText = I18N[LANG].errBackend.replace("{msg}", e.message);
     }
   }
 
-  function updateTraceRunIndexSelect(){
-    const sel = document.getElementById("traceRunIndex");
-    if (!sel) return;
-    const prevVal = sel.value;
-    sel.innerHTML = "<option value=\"\">—</option>" + runHistory.map(r => "<option value=\"" + r.topic + "\">#" + r.index + " (" + r.type + ")</option>").join("");
-    if (prevVal && runHistory.some(r => r.topic === prevVal)) sel.value = prevVal;
+  function renderBProductized(data, businessRecordId){
+    const out = document.getElementById('outStructured');
+    const t = I18N[LANG];
+    const tldrTitle = t.cardTldrTitle != null ? t.cardTldrTitle : (LANG === 'zh' ? '结论摘要' : 'Conclusion summary (Too Long; Didn\'t Read, TL;DR)');
+    const tldr = (data.tldr || '').split('\n').slice(0,5).join('\n');
+    const insights = (data.insights || []).slice(0,3);
+    const actions = (data.actions || []).slice(0,3);
+    let html = '';
+    if (businessRecordId) html += '<div class="b-record-id">' + escapeHtml(businessRecordId) + '</div>';
+    html += '<div class="b-card tldr"><h4>' + escapeHtml(tldrTitle) + '</h4><p>' + (tldr.replace(/\n/g, '<br>')) + '</p></div>';
+    html += '<div class="b-card"><h4>3 个核心业务判断</h4>';
+    insights.forEach(i => { html += '<p><strong>' + escapeHtml(i.title||'') + '</strong> ' + escapeHtml(i.why||'') + ' <em>(' + escapeHtml(i.confidence||'') + ')</em></p>'; });
+    html += '</div>';
+    html += '<div class="b-card"><h4>3 个下一步建议动作</h4>';
+    actions.forEach(a => { html += '<p>· ' + escapeHtml(a.do||'') + ' — ' + escapeHtml(a.owner||'') + ' / ' + escapeHtml(a.when||'') + '</p>'; });
+    html += '</div>';
+
+    const deliv = data.deliverables || {};
+    html += '<div class="accordion"><div class="accordion-head" onclick="toggleAccordion(this)">定性访谈大纲</div><div class="accordion-body">';
+    if (deliv.qual_interview_guide) {
+      html += '<pre style="font-size:11px; white-space:pre-wrap;">' + escapeHtml(JSON.stringify(deliv.qual_interview_guide, null, 2).slice(0,800)) + (JSON.stringify(deliv.qual_interview_guide).length > 800 ? '…' : '') + '</pre>';
+    }
+    html += '</div></div>';
+    html += '<div class="accordion"><div class="accordion-head" onclick="toggleAccordion(this)">定量问卷草案</div><div class="accordion-body">';
+    if (deliv.quant_survey) {
+      html += '<pre style="font-size:11px; white-space:pre-wrap;">' + escapeHtml(JSON.stringify(deliv.quant_survey, null, 2).slice(0,800)) + (JSON.stringify(deliv.quant_survey).length > 800 ? '…' : '') + '</pre>';
+    }
+    html += '</div></div>';
+    const trace = data.trace || {};
+    html += '<div class="accordion"><div class="accordion-head" onclick="toggleAccordion(this)">方法论说明</div><div class="accordion-body">';
+    html += '<p>来自字段: ' + escapeHtml((trace.from_fields || []).join(', ')) + '</p>';
+    html += '<p>假设: ' + escapeHtml((trace.assumptions || []).join('; ')) + '</p>';
+    html += '</div></div>';
+    out.innerHTML = html;
+  }
+  function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+  function toggleAccordion(headEl){
+    const body = headEl.nextElementSibling;
+    if (body && body.classList.contains('accordion-body')) body.classList.toggle('open');
   }
 
-  function onTraceRunIndexChange(){
-    const sel = document.getElementById("traceRunIndex");
-    const topicInput = document.getElementById("traceTopic");
-    if (sel && topicInput && sel.value) { topicInput.value = sel.value; }
+  function renderTimeline(){
+    const list = document.getElementById("timelineList");
+    if (!list) return;
+    const rev = runHistory.slice().reverse();
+    if (rev.length === 0) {
+      const t = I18N[LANG];
+      list.innerHTML = '<p class="hint">' + (t.timelineEmpty || '') + '</p>';
+      return;
+    }
+    const t2 = I18N[LANG];
+    const inputLbl = t2.timelineInputLabel || "Input summary";
+    const outputLbl = t2.timelineOutputLabel || "Output summary";
+    list.innerHTML = rev.map(r => {
+      const idLine = '<h4 class="timeline-item-id">' + escapeHtml(r.businessRecordId || ('#' + r.index)) + '</h4>';
+      const inputLine = '<div class="timeline-meta"><strong>' + escapeHtml(inputLbl) + '</strong> ' + escapeHtml(r.input_summary || '') + '</div>';
+      const outputLine = '<div class="timeline-meta"><strong>' + escapeHtml(outputLbl) + '</strong> ' + escapeHtml(r.output_summary || '') + '</div>';
+      return '<div class="timeline-item">' + idLine + inputLine + outputLine + '</div>';
+    }).join('');
   }
 
   function getTraceGraphUrl(){
-    const topic = (document.getElementById('traceTopic').value || '').trim();
-    const stage = (document.getElementById('traceStage').value || '').trim();
+    const topicEl = document.getElementById('traceTopic');
+    const stageEl = document.getElementById('traceStage');
+    const topic = (topicEl && topicEl.value || '').trim();
+    const stage = (stageEl && stageEl.value || '').trim();
     let url = `${API_BASE}/api/v1/trace_graph`;
     const params = [];
     if(topic) params.push('topic='+encodeURIComponent(topic));
